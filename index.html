@@ -213,8 +213,9 @@
       }
 
       try {
+        // Fetch shared memory record
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/shared_memories?id=eq.${shareId}&select=*,entries(*)`,
+          `${SUPABASE_URL}/rest/v1/shared_memories?id=eq.${shareId}&select=*`,
           { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
         );
         const data = await res.json();
@@ -225,7 +226,20 @@
         }
 
         const shared = data[0];
-        const entry = shared.entries;
+
+        // Fetch the entry separately
+        const entryRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/entries?id=eq.${shared.entry_id}&select=*`,
+          { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+        );
+        const entryData = await entryRes.json();
+
+        if (!entryData || entryData.length === 0) {
+          showError();
+          return;
+        }
+
+        const entry = entryData[0];
 
         // Get sender name
         const senderRes = await fetch(
