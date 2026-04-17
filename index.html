@@ -251,7 +251,7 @@
 
         renderMemory(entry, shared, senderName);
       } catch (e) {
-        showError();
+        document.getElementById('content').innerHTML = '<div class="error"><div class="error-title">Error: ' + e.message + '</div></div>';
       }
     }
 
