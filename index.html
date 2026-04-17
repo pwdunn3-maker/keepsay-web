@@ -206,6 +206,8 @@
     async function loadMemory() {
       const params = new URLSearchParams(window.location.search);
       const shareId = params.get('id') || window.location.pathname.split('/').pop();
+      document.title = 'ID: ' + shareId;
+      document.getElementById('content').innerHTML = '<div class="loading">Loading ID: ' + shareId + '</div>';
 
       if (!shareId || shareId === '' || shareId === 'index.html') {
         showDefault();
