@@ -1,0 +1,6 @@
+{
+  "routes": [
+    { "src": "/memory", "dest": "/memory.html" },
+    { "src": "/memory/(.*)", "dest": "/memory.html" }
+  ]
+}
