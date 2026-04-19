@@ -168,6 +168,24 @@
       transition: background 0.2s;
     }
     .open-btn:hover { background: var(--green-light); }
+    .copy-btn {
+      display: block;
+      width: 100%;
+      background: transparent;
+      color: var(--green);
+      font-size: 15px;
+      font-weight: 500;
+      padding: 12px;
+      border-radius: 50px;
+      border: 1px solid var(--green);
+      cursor: pointer;
+      text-align: center;
+      margin-top: 10px;
+      font-family: Inter, sans-serif;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover { background: var(--green-light); }
+    .copy-btn.copied { background: var(--green); color: #fff; border-color: var(--green); }
     .steps {
       width: 100%;
       background: #fff;
@@ -235,6 +253,7 @@
           <div class="code-label">Your invite code</div>
           <div class="code-value" id="invite-code">...</div>
           <div class="code-hint">You'll need this when you create your account</div>
+          <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy code</button>
         </div>
 
         <a href="https://apps.apple.com/app/keepsay" class="download-btn" id="download-btn">
@@ -275,6 +294,35 @@
   <script>
     const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
+
+    function copyCode() {
+      const code = document.getElementById('invite-code').textContent;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => {
+          const btn = document.getElementById('copy-btn');
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.textContent = 'Copy code';
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      } else {
+        const el = document.createElement('textarea');
+        el.value = code;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy code';
+          btn.classList.remove('copied');
+        }, 2000);
+      }
+    }
 
     async function loadInvite() {
       const parts = window.location.pathname.split('/');
@@ -325,7 +373,7 @@
       // Show deep link button if app might be installed
       const deepLink = 'keepsay://invite/' + code.toUpperCase();
       document.getElementById('open-btn').href = deepLink;
-      document.getElementById('open-btn').style.display = 'block';
+      // deep links not supported in browser
     }
 
     loadInvite();
