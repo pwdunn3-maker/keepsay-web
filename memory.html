@@ -85,9 +85,14 @@
 
     async function loadQRMemory(token) {
       try {
-        const res = await fetch(SUPABASE_URL + '/rest/v1/share_tokens?token=eq.' + token + '&select=*', { headers });
-        const data = await res.json();
-        if (!data || data.length === 0) { showError(); return; }
+        const url = SUPABASE_URL + '/rest/v1/share_tokens?token=eq.' + token + '&select=*';
+        const res = await fetch(url, { headers });
+        const text = await res.text();
+        const data = JSON.parse(text);
+        if (!data || data.length === 0) {
+          document.getElementById('content').innerHTML = '<div style="padding:20px;font-family:monospace;font-size:11px;word-break:break-all"><b>Debug:</b><br>URL: ' + url + '<br>Status: ' + res.status + '<br>Body: ' + text.substring(0,300) + '</div>';
+          return;
+        }
         const shareToken = data[0];
 
         const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + shareToken.entry_id + '&select=*', { headers });
