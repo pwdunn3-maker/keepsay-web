@@ -72,7 +72,7 @@
 
     // UUID = 36 chars with dashes = old shared_memories path
     // 12 char token = new QR share_tokens path
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    const isUUID = id.length === 36 && id.split('-').length === 5;
 
     async function loadMemory() {
       if (!id) { showDefault(); return; }
