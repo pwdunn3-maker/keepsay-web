@@ -133,8 +133,7 @@
           '<div class="unlock-date">Unlocks ' + formatted + '</div>' +
           '</div>';
       } else if (!entry.is_locked) {
-        bodyHtml = (entry.body ? '<div class="memory-body">' + entry.body.replace(/
-/g, '<br>') + '</div>' : '');
+        bodyHtml = (entry.body ? '<div class="memory-body">' + entry.body.split('\n').join('<br>') + '</div>' : '');
       }
 
       document.getElementById('content').innerHTML =
