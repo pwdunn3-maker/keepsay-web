@@ -3,6 +3,10 @@
     { "src": "/memory", "dest": "/memory.html" },
     { "src": "/memory/(.*)", "dest": "/memory.html" },
     { "src": "/invite/([^/]+)", "dest": "/invite.html" },
-    { "src": "/invite", "dest": "/invite.html" }
+    { "src": "/invite", "dest": "/invite.html" },
+    { "src": "/gift", "dest": "/gift.html" },
+    { "src": "/redeem/([^/]+)", "dest": "/redeem.html" },
+    { "src": "/redeem", "dest": "/redeem.html" },
+    { "src": "/api/(.*)", "dest": "/api/$1.js" }
   ]
 }
