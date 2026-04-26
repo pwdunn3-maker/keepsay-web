@@ -1,5 +1,6 @@
 {
   "routes": [
+    { "src": "/reset", "dest": "/reset.html" },
     { "src": "/memory", "dest": "/memory.html" },
     { "src": "/memory/(.*)", "dest": "/memory.html" },
     { "src": "/invite/([^/]+)", "dest": "/invite.html" },
@@ -10,3 +11,4 @@
     { "src": "/api/(.*)", "dest": "/api/$1.js" }
   ]
 }
+
