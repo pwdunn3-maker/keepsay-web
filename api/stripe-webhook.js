@@ -54,7 +54,7 @@ async function sendGiftEmail({ recipientEmail, recipientName, gifterName, messag
 <body style="margin:0;padding:0;background:#f9f6f0;font-family:'Georgia',serif;">
   <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
     <div style="background:#1B4332;padding:40px 40px 32px;text-align:center;">
-      <div style="font-size:28px;color:#D4A843;margin-bottom:8px;">&#9829;</div>
+      <div style="font-size:28px;color:#D4A843;margin-bottom:8px;">&#9829;&#65038;</div>
       <div style="font-family:'Georgia',serif;font-size:28px;color:#ffffff;letter-spacing:1px;">Keepsay</div>
       <div style="color:#a8c5b5;font-size:14px;margin-top:6px;">A gift for ${recipientName}</div>
     </div>
@@ -183,3 +183,5 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({ received: true });
 };
+
+
