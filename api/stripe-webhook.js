@@ -117,8 +117,7 @@ async function sendReceiptEmail({ gifterEmail, gifterName, recipientName, tier, 
 <body style="margin:0;padding:0;background:#f9f6f0;font-family:'Georgia',serif;">
   <div style="max-width:520px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
     <div style="background:#1B4332;padding:32px 40px;text-align:center;">
-      <div style="font-family:'Georgia',serif;font-size:24px;color:#ffffff;">Keepsay</div>
-      <div style="color:#a8c5b5;font-size:14px;margin-top:4px;">Gift Receipt</div>
+      <img src="https://www.getkeepsay.com/icon.png" alt="Keepsay" style="width:72px;height:72px;border-radius:16px;margin-bottom:12px;"><div style="font-family:'Georgia',serif;font-size:24px;color:#ffffff;">Keepsay</div><div style="color:#a8c5b5;font-size:14px;margin-top:4px;">Gift Receipt</div>
     </div>
     <div style="padding:36px 40px;">
       <p style="font-size:16px;color:#2d2d2d;margin:0 0 24px;">Hi ${gifterName}, your gift is on its way to ${recipientName}!</p>
@@ -182,6 +181,7 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({ received: true });
 };
+
 
 
 
