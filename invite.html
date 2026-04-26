@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/pwdun/Downloads/invite_6.html -->
+<!-- saved from url=(0046)file:///C:/Users/pwdun/Downloads/invite_7.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,6 +61,7 @@
         <div class="code-label">Your invite code</div>
         <div class="code-value" id="code-display"></div>
         <div class="code-note">You'll need this code in step 3 below.</div>
+        <button onclick="copyCode()" id="copy-btn" style="margin-top:12px;background:#1B4332;color:#fff;border:none;border-radius:50px;padding:10px 24px;font-size:14px;font-weight:600;font-family:Inter,sans-serif;cursor:pointer;">Copy code</button>
       </div>
 
       <!-- Steps -->
@@ -154,6 +155,16 @@
     }
 
     loadInvite();
+
+    function copyCode() {
+      const code = document.getElementById("code-display").textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById("copy-btn");
+        btn.textContent = "Copied!";
+        btn.style.background = "#10B981";
+        setTimeout(() => { btn.textContent = "Copy code"; btn.style.background = "#1B4332"; }, 2000);
+      });
+    }
   </script>
 
 
