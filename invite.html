@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0046)file:///C:/Users/pwdun/Downloads/invite_5.html -->
+<!-- saved from url=(0046)file:///C:/Users/pwdun/Downloads/invite_6.html -->
 <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,11 +9,7 @@
   <link href="./invite_files/css2" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --green: #1B4332; --gold: #D4A843; --cream: #F9F6F0;
-      --text: #1A1A1A; --text-secondary: #6B6B6B;
-      --border: rgba(0,0,0,0.08); --surface: #ffffff;
-    }
+    :root { --green: #1B4332; --gold: #D4A843; --cream: #F9F6F0; --text: #1A1A1A; --text-secondary: #6B6B6B; --border: rgba(0,0,0,0.08); --surface: #ffffff; }
     body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
     nav { background: rgba(250,250,246,0.95); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--border); padding: 0 24px; height: 60px; display: flex; align-items: center; }
     .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
@@ -22,28 +18,25 @@
     .nav-logo-name { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
     main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
     .card { background: var(--surface); border-radius: 24px; padding: 40px; width: 100%; max-width: 480px; box-shadow: 0 2px 24px rgba(0,0,0,0.07); text-align: center; }
-    .invite-icon { font-size: 56px; margin-bottom: 20px; }
+    .invite-icon { margin-bottom: 20px; }
+    .invite-icon img { width: 80px; height: 80px; border-radius: 18px; }
     .invite-label { font-size: 13px; font-weight: 600; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
     .invite-title { font-family: 'Lora', serif; font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 12px; }
-    .invite-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 32px; }
-    .features { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; text-align: left; }
-    .feature { display: flex; align-items: flex-start; gap: 12px; }
-    .feature-icon { font-size: 20px; width: 28px; flex-shrink: 0; }
-    .feature-text { font-size: 15px; color: var(--text-secondary); line-height: 1.5; }
-    .feature-text strong { color: var(--text); font-weight: 600; }
+    .invite-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 28px; }
+    .steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 28px; text-align: left; background: #F9F6F0; border-radius: 16px; padding: 20px; }
+    .step { display: flex; align-items: flex-start; gap: 14px; }
+    .step-num { width: 28px; height: 28px; border-radius: 14px; background: var(--green); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .step-text { font-size: 15px; color: var(--text); line-height: 1.5; }
+    .step-text strong { color: var(--green); }
+    .code-section { background: #E8F0EB; border-radius: 16px; padding: 20px; border: 1px solid #C8DDD0; margin-bottom: 24px; }
+    .code-label { font-size: 12px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .code-value { font-family: 'Courier New', monospace; font-size: 32px; font-weight: 700; letter-spacing: 10px; color: var(--green); margin-bottom: 8px; }
+    .code-note { font-size: 13px; color: #3B6D11; line-height: 1.5; }
     .cta-group { display: flex; flex-direction: column; gap: 12px; }
-    .cta-btn { display: block; padding: 16px 24px; border-radius: 50px; font-size: 16px; font-weight: 700; font-family: 'Inter', sans-serif; text-decoration: none; cursor: pointer; border: none; width: 100%; }
+    .cta-btn { display: block; padding: 16px 24px; border-radius: 50px; font-size: 16px; font-weight: 700; font-family: 'Inter', sans-serif; text-decoration: none; cursor: pointer; border: none; width: 100%; text-align: center; }
     .cta-primary { background: var(--green); color: #fff; }
     .cta-android { background: #1A1A1A; color: #fff; }
-    .cta-primary:hover { opacity: 0.9; }
-    .cta-android:hover { opacity: 0.85; }
-    .divider { height: 0.5px; background: var(--border); margin: 28px 0; }
-    .code-section { background: #E8F0EB; border-radius: 16px; padding: 20px; border: 1px solid #C8DDD0; }
-    .code-label { font-size: 12px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .code-value { font-family: 'Courier New', monospace; font-size: 28px; font-weight: 700; letter-spacing: 8px; color: var(--green); margin-bottom: 8px; }
-    .code-note { font-size: 13px; color: #3B6D11; line-height: 1.5; }
     .loading { color: var(--text-secondary); font-size: 15px; padding: 20px 0; }
-    .error-msg { color: #E24B4A; font-size: 14px; padding: 16px; background: #FEF2F2; border-radius: 12px; margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -56,27 +49,33 @@
 
   <main>
     <div class="card">
-      <div class="invite-icon"><img src="./invite_files/icon.png" alt="Keepsay" style="width:80px;height:80px;border-radius:18px;"></div>
+      <div class="invite-icon">
+        <img src="./invite_files/icon.png" alt="Keepsay">
+      </div>
       <div class="invite-label" id="invite-label">You've been invited</div>
       <h1 class="invite-title" id="invite-title">Join Keepsay</h1>
       <p class="invite-sub" id="invite-sub">A place to keep your voice, your memories, and your story — for the people you love.</p>
 
-      <div class="features">
-        <div class="feature">
-          <span class="feature-icon">🎙</span>
-          <span class="feature-text"><strong>Record your voice</strong> — leave messages your family will treasure forever</span>
+      <!-- Invite code — shown when loaded -->
+      <div class="code-section" id="code-section" style="display:none;">
+        <div class="code-label">Your invite code</div>
+        <div class="code-value" id="code-display"></div>
+        <div class="code-note">You'll need this code in step 3 below.</div>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Download <strong>Keepsay</strong> from the App Store or Google Play</div>
         </div>
-        <div class="feature">
-          <span class="feature-icon">📸</span>
-          <span class="feature-text"><strong>Keep photos and memories</strong> — with cloud backup, always safe</span>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Create your free account — <strong>no credit card needed</strong></div>
         </div>
-        <div class="feature">
-          <span class="feature-icon">🔒</span>
-          <span class="feature-text"><strong>Time-locked memories</strong> — open on a birthday, an age, or a milestone</span>
-        </div>
-        <div class="feature">
-          <span class="feature-icon">💌</span>
-          <span class="feature-text"><strong>Share with family</strong> — memories flow directly to the people who matter</span>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Go to <strong>Profile → Enter an invite code</strong> and enter the code above to connect</div>
         </div>
       </div>
 
@@ -84,16 +83,6 @@
         <a href="https://apps.apple.com/app/keepsay/id6741851302" class="cta-btn cta-primary">🍎 Download on the App Store</a>
         <a href="https://play.google.com/store/apps/details?id=com.keepsay.app" class="cta-btn cta-android">▶ Get it on Google Play</a>
       </div>
-
-      <div class="divider"></div>
-
-      <div class="code-section" id="code-section" style="display:none;">
-        <div class="code-label">Your invite code</div>
-        <div class="code-value" id="code-display"></div>
-        <div class="code-note">After downloading Keepsay, go to Profile → Enter an invite code and enter this code to connect.</div>
-      </div>
-
-      <div id="loading-msg" class="loading" style="display: none;">Loading your invite...</div>
     </div>
   </main>
 
@@ -101,58 +90,66 @@
     const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
 
-    // Get code from URL path — /invite/XXXXXX
     const pathParts = window.location.pathname.split('/');
     const code = pathParts[pathParts.length - 1];
 
-    async function loadInvite() {
-      const loadingEl = document.getElementById('loading-msg');
+    async function fetchJSON(url) {
+      const res = await fetch(url, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
+        }
+      });
+      return res.json();
+    }
 
-      if (!code || code === 'invite') {
-        loadingEl.style.display = 'none';
-        return;
-      }
+    async function loadInvite() {
+      if (!code || code === 'invite') return;
 
       try {
-        // First check invite_links (reusable)
-        const reusableRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/invite_links?code=eq.${code}&select=code,from_user_id,profiles(display_name)`,
-          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
+        // Step 1: check invite_links (reusable family link)
+        const reusable = await fetchJSON(
+          `${SUPABASE_URL}/rest/v1/invite_links?code=eq.${code}&select=code,from_user_id`
         );
-        const reusableData = await reusableRes.json();
 
-        if (reusableData && reusableData.length > 0) {
-          const invite = reusableData[0];
-          const inviterName = invite.profiles?.display_name || 'Someone';
-          document.getElementById('invite-label').textContent = `${inviterName} invited you`;
-          document.getElementById('invite-title').textContent = `Join ${inviterName} on Keepsay`;
-          document.getElementById('invite-sub').textContent = `${inviterName} uses Keepsay to keep memories, share moments, and preserve their voice for the people they love. Join them.`;
+        if (reusable && reusable.length > 0) {
+          const fromUserId = reusable[0].from_user_id;
+
+          // Step 2: get inviter's display name
+          const profiles = await fetchJSON(
+            `${SUPABASE_URL}/rest/v1/profiles?id=eq.${fromUserId}&select=display_name`
+          );
+          const name = profiles?.[0]?.display_name || 'Someone';
+
+          document.getElementById('invite-label').textContent = name + ' invited you';
+          document.getElementById('invite-title').textContent = 'Join ' + name + ' on Keepsay';
+          document.getElementById('invite-sub').textContent = name + ' uses Keepsay to keep memories, share moments, and preserve their voice for the people they love. Join them in 3 easy steps.';
           document.getElementById('code-display').textContent = code;
           document.getElementById('code-section').style.display = 'block';
-          loadingEl.style.display = 'none';
           return;
         }
 
-        // Fall back to single-use connections invite
-        const singleRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/connections?invite_code=eq.${code}&status=eq.pending&select=invite_code,from_user_id,profiles(display_name)`,
-          { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY } }
+        // Step 1b: check single-use connections invite
+        const single = await fetchJSON(
+          `${SUPABASE_URL}/rest/v1/connections?invite_code=eq.${code}&status=eq.pending&select=invite_code,from_user_id`
         );
-        const singleData = await singleRes.json();
 
-        if (singleData && singleData.length > 0) {
-          const invite = singleData[0];
-          const inviterName = invite.profiles?.display_name || 'Someone';
-          document.getElementById('invite-label').textContent = `${inviterName} invited you`;
-          document.getElementById('invite-title').textContent = `Join ${inviterName} on Keepsay`;
+        if (single && single.length > 0) {
+          const fromUserId = single[0].from_user_id;
+          const profiles = await fetchJSON(
+            `${SUPABASE_URL}/rest/v1/profiles?id=eq.${fromUserId}&select=display_name`
+          );
+          const name = profiles?.[0]?.display_name || 'Someone';
+
+          document.getElementById('invite-label').textContent = name + ' invited you';
+          document.getElementById('invite-title').textContent = 'Join ' + name + ' on Keepsay';
+          document.getElementById('invite-sub').textContent = name + ' wants to share memories with you on Keepsay. Join them in 3 easy steps.';
           document.getElementById('code-display').textContent = code;
           document.getElementById('code-section').style.display = 'block';
         }
 
-        loadingEl.style.display = 'none';
       } catch (e) {
         console.log('Invite load error:', e);
-        loadingEl.style.display = 'none';
       }
     }
 
