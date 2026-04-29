@@ -65,8 +65,8 @@
     /* DURATION TOGGLE */
     .duration-toggle { display: flex; background: var(--warm-gray); border-radius: 12px; padding: 4px; gap: 4px; }
     .duration-btn { flex: 1; padding: 10px; text-align: center; border-radius: 9px; border: none; background: transparent; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; color: var(--text-secondary); transition: all 0.2s; }
-    .duration-btn.active { background: #fff; color: var(--green); font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .duration-save { font-size: 11px; color: var(--gold); font-weight: 500; display: block; margin-top: 2px; }
+    .duration-btn.active { background: var(--green); color: #fff; font-weight: 600; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .duration-save { font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 500; display: block; margin-top: 2px; }
 
     /* FORM */
     .form-group { margin-bottom: 16px; }
@@ -174,7 +174,7 @@
           </button>
           <button class="duration-btn active" onclick="selectDuration('annual')">
             Annual
-            <span class="duration-save">Save up to 42%</span>
+            <span class="duration-save" id="duration-save-label">Save 42%</span>
           </button>
         </div>
       </div>
@@ -334,6 +334,9 @@
         'What\'s included in Keepsay ' + (selectedTier === 'pro' ? 'Pro' : 'Legacy');
       document.getElementById('features-list').innerHTML =
         selectedTier === 'pro' ? PRO_FEATURES : LEGACY_FEATURES;
+
+      const saveLabel = document.getElementById('duration-save-label');
+      if (saveLabel) saveLabel.textContent = selectedTier === 'legacy' ? 'Save 33%' : 'Save 42%';
     }
 
     function selectTier(tier) {
