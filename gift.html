@@ -184,11 +184,11 @@
             <div class="tier-desc">Unlimited memories, voice recordings, photos, Family Circles, and time-locked vault.</div>
             <div class="tier-price" id="pro-price">$4.99 <span class="tier-price-sub">/ month</span></div>
           </div>
-          <div class="tier-card tier-card-disabled" data-tier="legacy">
-            <div class="tier-badge coming-soon">Coming Soon — Father's Day</div>
-            <div class="tier-name" style="color: var(--text-hint);">Legacy</div>
-            <div class="tier-desc" style="color: var(--text-hint);">Video memories, AI-assisted writing, and expanded storage. Join the waitlist below to be first to gift Legacy.</div>
-            <div class="tier-price" style="color: var(--text-hint); font-size: 13px;">Waitlist open ↓</div>
+          <div class="tier-card" data-tier="legacy" onclick="selectTier('legacy')">
+            <div class="tier-badge legacy">Keepsay Legacy</div>
+            <div class="tier-name">Legacy</div>
+            <div class="tier-desc">Video memories, AI writing assist, and everything in Pro. Your voice. Your face. Your stories.</div>
+            <div class="tier-price" id="legacy-price">$9.99 <span class="tier-price-sub">/ month</span></div>
           </div>
         </div>
 
@@ -299,29 +299,6 @@
   </div>
 
   <!-- LEGACY WAITLIST -->
-  <div class="legacy-waitlist">
-    <div class="legacy-waitlist-badge">🎬 Coming This Summer</div>
-    <h2 class="legacy-waitlist-title">Be first to gift <em>Keepsay Legacy</em></h2>
-    <p class="legacy-waitlist-sub">Legacy takes family memory to the next level — video messages, AI-assisted writing, and expanded storage. We're building it now. Be the first to know when it's ready to gift.</p>
-
-    <div class="legacy-features-preview">
-      <div class="legacy-feature-item"><span class="legacy-feature-icon">🎬</span><span class="legacy-feature-text">Video memories</span></div>
-      <div class="legacy-feature-item"><span class="legacy-feature-icon">✨</span><span class="legacy-feature-text">AI-assisted writing</span></div>
-      <div class="legacy-feature-item"><span class="legacy-feature-icon">📦</span><span class="legacy-feature-text">Expanded storage</span></div>
-      <div class="legacy-feature-item"><span class="legacy-feature-icon">🔒</span><span class="legacy-feature-text">Everything in Pro</span></div>
-    </div>
-
-    <div id="legacy-form">
-      <div class="legacy-waitlist-form">
-        <input type="email" class="legacy-email-input" id="legacy-email" placeholder="your@email.com" />
-        <button class="legacy-submit-btn" onclick="joinLegacyWaitlist()">Notify me →</button>
-      </div>
-      <p class="legacy-note">No commitment. No spam. Just a heads-up when Legacy launches.</p>
-    </div>
-
-    <div class="legacy-success-msg" id="legacy-success">
-      <p>🌿 You're on the list! We'll email you the moment Keepsay Legacy is ready to gift.</p>
-    </div>
   </div>
 
   <footer class="gift-footer">
@@ -349,13 +326,13 @@
       <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
     `;
 
-    const LEGACY_FEATURES = `
-      <div class="feature-row"><span class="feature-icon">🎬</span><span class="feature-text">Video memories — record and share video messages (coming soon)</span></div>
+      <div class="feature-row"><span class="feature-icon">🎥</span><span class="feature-text">Video memories — record yourself telling the stories only you can tell</span></div>
+      <div class="feature-row"><span class="feature-icon">🎥</span><span class="feature-text">Video memories — record yourself telling the stories only you can tell</span></div>
       <div class="feature-row"><span class="feature-icon">🎙</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
       <div class="feature-row"><span class="feature-icon">📸</span><span class="feature-text">Unlimited photo memories with expanded storage</span></div>
       <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked vault — memories that open at the right moment</span></div>
-      <div class="feature-row"><span class="feature-icon">🌿</span><span class="feature-text">Family Circles — share with the whole family at once</span></div>
-      <div class="feature-row"><span class="feature-icon">🛡️</span><span class="feature-text">Legacy Guardian — designate someone to manage their memories (coming soon)</span></div>
+      <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
+      <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
     `;
 
     function getCurrentKey() {
@@ -418,13 +395,7 @@
       },
     });
 
-    async function joinLegacyWaitlist() {
-      const email = document.getElementById('legacy-email').value.trim();
-      if (!email || !email.includes('@')) {
-        document.getElementById('legacy-email').focus();
-        return;
-      }
-      const btn = document.querySelector('.legacy-submit-btn');
+          const btn = document.querySelector('.legacy-submit-btn');
       btn.disabled = true;
       btn.textContent = 'Joining...';
       try {
@@ -508,7 +479,6 @@
       const legacyInput = document.getElementById('legacy-email');
       if (legacyInput) {
         legacyInput.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') joinLegacyWaitlist();
         });
       }
 
