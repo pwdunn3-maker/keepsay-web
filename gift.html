@@ -54,11 +54,9 @@
     .tier-card:hover { border-color: var(--green); background: var(--green-light); }
     .tier-card.selected { border-color: var(--green); background: var(--green-light); }
     .tier-card.selected::after { content: '✓'; position: absolute; top: 12px; right: 14px; font-size: 14px; font-weight: 700; color: var(--green); }
-    .tier-card-disabled { opacity: 0.6; cursor: default; pointer-events: none; border-style: dashed; }
-    .tier-card-disabled:hover { border-color: var(--border); background: #fff; } font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; margin-bottom: 10px; }
+    .tier-badge { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; margin-bottom: 10px; display: inline-block; }
     .tier-badge.pro { background: var(--green-light); color: var(--green); }
     .tier-badge.legacy { background: rgba(212,168,83,0.15); color: #A07830; }
-    .tier-badge.coming-soon { background: #F3F4F6; color: #9CA3AF; }
     .tier-name { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
     .tier-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
     .tier-price { font-size: 15px; font-weight: 600; color: var(--green); }
@@ -114,30 +112,7 @@
     .success-sub { font-size: 16px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 32px; }
     .success-note { font-size: 13px; color: var(--text-hint); background: var(--warm-gray); padding: 14px 18px; border-radius: 12px; }
 
-    /* LEGACY WAITLIST */
-    .legacy-waitlist { background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); border-radius: 20px; padding: 36px 32px; margin: 0 24px 80px; max-width: 640px; margin-left: auto; margin-right: auto; }
-    .legacy-waitlist-badge { display: inline-block; background: rgba(212,168,83,0.2); border: 1px solid rgba(212,168,83,0.4); color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 14px; border-radius: 50px; margin-bottom: 16px; }
-    .legacy-waitlist-title { font-family: 'Lora', serif; font-size: clamp(20px, 3vw, 26px); font-weight: 600; color: #fff; margin-bottom: 10px; line-height: 1.3; }
-    .legacy-waitlist-title em { font-style: italic; color: var(--gold); }
-    .legacy-waitlist-sub { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 24px; }
-    .legacy-features-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
-    .legacy-feature-item { display: flex; align-items: center; gap: 8px; }
-    .legacy-feature-icon { font-size: 16px; flex-shrink: 0; }
-    .legacy-feature-text { font-size: 13px; color: rgba(255,255,255,0.8); }
-    .legacy-waitlist-form { display: flex; gap: 8px; }
-    .legacy-email-input { flex: 1; padding: 12px 16px; border-radius: 50px; border: none; font-family: 'Inter', sans-serif; font-size: 14px; color: var(--text); outline: none; }
-    .legacy-email-input::placeholder { color: var(--text-hint); }
-    .legacy-submit-btn { background: var(--gold); color: #1A1A1A; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; padding: 12px 20px; border-radius: 50px; border: none; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
-    .legacy-submit-btn:hover { opacity: 0.9; }
-    .legacy-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-    .legacy-success-msg { display: none; text-align: center; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 12px; }
-    .legacy-success-msg p { font-size: 14px; color: rgba(255,255,255,0.9); }
-    .legacy-note { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 12px; text-align: center; }
-    @media (max-width: 500px) {
-      .legacy-features-preview { grid-template-columns: 1fr; }
-      .legacy-waitlist-form { flex-direction: column; }
-      .legacy-submit-btn { border-radius: 50px; }
-    }
+    /* SPINNER */
     .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(26,26,26,0.3); border-top-color: #1A1A1A; border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -181,7 +156,7 @@
           <div class="tier-card selected" data-tier="pro" onclick="selectTier('pro')">
             <div class="tier-badge pro">Keepsay Pro</div>
             <div class="tier-name">Pro</div>
-            <div class="tier-desc">Unlimited memories, voice recordings, photos, Family Circles, and time-locked vault.</div>
+            <div class="tier-desc">Unlimited memories, voice recordings, photos, Family Circles, and time-locked memories.</div>
             <div class="tier-price" id="pro-price">$4.99 <span class="tier-price-sub">/ month</span></div>
           </div>
           <div class="tier-card" data-tier="legacy" onclick="selectTier('legacy')">
@@ -209,11 +184,11 @@
         <div class="features" id="features-box">
           <div class="features-title" id="features-title">What's included in Keepsay Pro</div>
           <div id="features-list">
-            <div class="feature-row"><span class="feature-icon">🎙</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
+            <div class="feature-row"><span class="feature-icon">🎤</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
             <div class="feature-row"><span class="feature-icon">📸</span><span class="feature-text">Unlimited photo memories with secure cloud backup</span></div>
-            <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked vault — memories that open at the right moment</span></div>
+            <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked memories — sealed until the perfect moment to open</span></div>
             <div class="feature-row"><span class="feature-icon">🌿</span><span class="feature-text">Family Circles — share with the whole family at once</span></div>
-            <div class="feature-row"><span class="feature-icon">✨</span><span class="feature-text">AI reflection prompts to help them write more</span></div>
+            <div class="feature-row"><span class="feature-icon">✨</span><span class="feature-text">Thoughtful reflection prompts to help them write more</span></div>
             <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
           </div>
         </div>
@@ -298,15 +273,11 @@
     <div class="success-note">A receipt has been sent to your email. The gift is valid for one year from today.</div>
   </div>
 
-  <!-- LEGACY WAITLIST -->
-  </div>
-
   <footer class="gift-footer">
     <p>Questions? Email us at <a href="mailto:hello@stubborngood.co">hello@stubborngood.co</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
   </footer>
 
   <script>
-    // ─── STATE ───────────────────────────────────────────────
     let selectedTier = 'pro';
     let selectedDuration = 'annual';
 
@@ -318,20 +289,22 @@
     };
 
     const PRO_FEATURES = `
-      <div class="feature-row"><span class="feature-icon">🎙</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
+      <div class="feature-row"><span class="feature-icon">🎤</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
       <div class="feature-row"><span class="feature-icon">📸</span><span class="feature-text">Unlimited photo memories with secure cloud backup</span></div>
-      <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked vault — memories that open at the right moment</span></div>
+      <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked memories — sealed until the perfect moment to open</span></div>
       <div class="feature-row"><span class="feature-icon">🌿</span><span class="feature-text">Family Circles — share with the whole family at once</span></div>
-      <div class="feature-row"><span class="feature-icon">💬</span><span class="feature-text">Thoughtful reflection prompts to help them write more</span></div>
+      <div class="feature-row"><span class="feature-icon">✨</span><span class="feature-text">Thoughtful reflection prompts to help them write more</span></div>
       <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
     `;
 
+    const LEGACY_FEATURES = `
       <div class="feature-row"><span class="feature-icon">🎥</span><span class="feature-text">Video memories — record yourself telling the stories only you can tell</span></div>
-      <div class="feature-row"><span class="feature-icon">🎥</span><span class="feature-text">Video memories — record yourself telling the stories only you can tell</span></div>
-      <div class="feature-row"><span class="feature-icon">🎙</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
-      <div class="feature-row"><span class="feature-icon">📸</span><span class="feature-text">Unlimited photo memories with expanded storage</span></div>
-      <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked vault — memories that open at the right moment</span></div>
-      <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
+      <div class="feature-row"><span class="feature-icon">🤖</span><span class="feature-text">AI writing assist — find words for what is hard to express</span></div>
+      <div class="feature-row"><span class="feature-icon">💾</span><span class="feature-text">Generous video storage — 5GB included, add more anytime for $1.99/mo</span></div>
+      <div class="feature-row"><span class="feature-icon">🎤</span><span class="feature-text">Unlimited voice recordings — their voice, preserved forever</span></div>
+      <div class="feature-row"><span class="feature-icon">📸</span><span class="feature-text">Unlimited photo memories with secure cloud backup</span></div>
+      <div class="feature-row"><span class="feature-icon">🔒</span><span class="feature-text">Time-locked memories — sealed until the perfect moment to open</span></div>
+      <div class="feature-row"><span class="feature-icon">🌿</span><span class="feature-text">Family Circles — share with the whole family at once</span></div>
       <div class="feature-row"><span class="feature-icon">📦</span><span class="feature-text">Full data export — their memories are always theirs</span></div>
     `;
 
@@ -343,7 +316,6 @@
       const key = getCurrentKey();
       const price = PRICES[key];
 
-      // Update price displays
       document.getElementById('pro-price').innerHTML =
         selectedDuration === 'annual'
           ? '$34.99 <span class="tier-price-sub">/ year</span>'
@@ -353,13 +325,11 @@
           ? '$79.99 <span class="tier-price-sub">/ year</span>'
           : '$9.99 <span class="tier-price-sub">/ month</span>';
 
-      // Update summary
       document.getElementById('summary-plan').textContent = price.label;
       document.getElementById('summary-price').textContent = price.display;
       document.getElementById('summary-total').textContent = price.display;
       document.getElementById('btn-price').textContent = price.display;
 
-      // Update features
       document.getElementById('features-title').textContent =
         'What\'s included in Keepsay ' + (selectedTier === 'pro' ? 'Pro' : 'Legacy');
       document.getElementById('features-list').innerHTML =
@@ -380,7 +350,6 @@
       updateUI();
     }
 
-    // ─── STRIPE ─────────────────────────────────────────────
     const stripe = Stripe('pk_test_51TQTulPdWkxJbIVEkQXe0M54rbbDMSQ50MkmWrVtdQRd5QT4H6d6hyxvesyuevtG0jFDAYcEeRcwtXrrWkrqhoji007NF7lAyc');
     const elements = stripe.elements();
     const cardElement = elements.create('card', {
@@ -394,20 +363,6 @@
         invalid: { color: '#E24B4A' },
       },
     });
-
-
-
-
-      try {
-        await fetch('/api/legacy-waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-      } catch (e) { /* fail silently — still show success */ }
-      document.getElementById('legacy-form').style.display = 'none';
-      document.getElementById('legacy-success').style.display = 'block';
-    }
 
     async function handlePayment() {
       const recipientName = document.getElementById('recipient-name').value.trim();
@@ -460,32 +415,20 @@
       }
     }
 
-    // Wire up everything once DOM is ready
     document.addEventListener('DOMContentLoaded', function() {
-      // Mount Stripe card element
       cardElement.mount('#card-element');
       cardElement.on('change', function(event) {
         document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
       });
 
-      // Live update recipient name in summary
       document.getElementById('recipient-name').addEventListener('input', function() {
         const name = this.value.trim();
         document.getElementById('summary-recipient').textContent = name || '—';
         document.getElementById('success-recipient-name').textContent = name || 'them';
       });
 
-      // Enter key on legacy waitlist email
-      const legacyInput = document.getElementById('legacy-email');
-      if (legacyInput) {
-        legacyInput.addEventListener('keydown', function(e) {
-        });
-      }
-
       updateUI();
     });
   </script>
 </body>
 </html>
-
-
