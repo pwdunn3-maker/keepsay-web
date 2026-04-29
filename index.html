@@ -54,8 +54,11 @@
     .split-title { font-family: 'Lora', serif; font-size: clamp(24px, 3vw, 36px); font-weight: 600; line-height: 1.25; color: var(--text); letter-spacing: -0.3px; }
     .split-title em { font-style: italic; color: var(--green); }
     .split-body { font-size: 16px; color: var(--text-secondary); line-height: 1.75; max-width: 440px; }
-    .moments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .moments-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .moment-card { background: #fff; border-radius: 20px; padding: 28px; border: 0.5px solid var(--border); }
+    .moment-card:last-child:nth-child(3n+2) { grid-column: 2; }
+    .moment-card:nth-child(4) { grid-column: 1; }
+    .moment-card:nth-child(5) { grid-column: 2; }
     .moment-icon { font-size: 32px; margin-bottom: 16px; display: block; }
     .moment-title { font-family: 'Lora', serif; font-size: 19px; font-weight: 600; color: var(--text); margin-bottom: 10px; line-height: 1.3; }
     .moment-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
