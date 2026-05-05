@@ -9,11 +9,6 @@
     { "src": "/redeem/([^/]+)", "dest": "/redeem.html" },
     { "src": "/redeem", "dest": "/redeem.html" },
     { "src": "/api/(.*)", "dest": "/api/$1.js" }
-  ],
-  "crons": [
-    {
-      "path": "/api/r2-backup",
-      "schedule": "0 2 * * *"
-    }
   ]
 }
+

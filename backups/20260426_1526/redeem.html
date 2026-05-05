@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redeem Your Keepsay Gift</title>
+  <meta name="description" content="Someone gave you the gift of Keepsay. Redeem your gift and start preserving your memories." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #1B4332; --green-mid: #2D6A4F; --green-light: #E8F0EB;
+      --gold: #D4A853; --cream: #FAFAF6; --warm-gray: #F5F3EE;
+      --text: #1A1A1A; --text-secondary: #5C5C5C; --text-hint: #9A9A9A; --border: #E4E1D8;
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column; }
+
+    nav { background: rgba(250,250,246,0.95); backdrop-filter: blur(12px); border-bottom: 0.5px solid var(--border); padding: 0 24px; height: 60px; display: flex; align-items: center; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-icon { width: 32px; height: 32px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .nav-logo-icon span { font-family: 'Lora', serif; font-size: 18px; font-weight: 600; color: #fff; }
+    .nav-logo-name { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: -0.3px; }
+
+    main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+
+    .redeem-card { background: #fff; border-radius: 24px; border: 0.5px solid var(--border); padding: 48px 40px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 8px 40px rgba(0,0,0,0.06); }
+
+    .gift-icon { font-size: 56px; margin-bottom: 20px; display: block; }
+
+    .gifter-intro { font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+    .gifter-name { font-family: 'Lora', serif; font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .gift-plan { font-size: 15px; color: var(--text-secondary); margin-bottom: 20px; }
+
+    .gift-message-box { background: var(--green-light); border-left: 3px solid var(--green); border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; text-align: left; }
+    .gift-message-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); margin-bottom: 6px; }
+    .gift-message-text { font-family: 'Lora', serif; font-size: 15px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+    .divider { border: none; border-top: 0.5px solid var(--border); margin: 24px 0; }
+
+    .redeem-title { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .redeem-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+
+    /* Download buttons */
+    .download-btns { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .download-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; border-radius: 50px; text-decoration: none; font-size: 15px; font-weight: 600; transition: opacity 0.2s, transform 0.1s; }
+    .download-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .download-btn.ios { background: var(--green); color: #fff; }
+    .download-btn.android { background: #1A1A1A; color: #fff; }
+    .download-btn-icon { font-size: 20px; }
+
+    /* Manual code entry */
+    .manual-code { text-align: center; }
+    .manual-code-label { font-size: 13px; color: var(--text-hint); margin-bottom: 12px; }
+    .code-display { background: var(--warm-gray); border: 1.5px dashed var(--border); border-radius: 12px; padding: 16px; margin-bottom: 8px; }
+    .code-value { font-family: 'Courier New', monospace; font-size: 24px; font-weight: 700; letter-spacing: 0.2em; color: var(--green); }
+    .code-copy-btn { background: none; border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
+    .code-copy-btn:hover { border-color: var(--green); color: var(--green); }
+    .code-instructions { font-size: 12px; color: var(--text-hint); line-height: 1.5; margin-top: 12px; }
+
+    /* Loading / error states */
+    .loading { text-align: center; padding: 40px; }
+    .loading-icon { font-size: 40px; margin-bottom: 16px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .error-state { text-align: center; padding: 40px; }
+    .error-icon { font-size: 48px; margin-bottom: 16px; }
+    .error-title { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .error-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .error-contact { margin-top: 20px; font-size: 13px; color: var(--text-hint); }
+    .error-contact a { color: var(--green); text-decoration: none; }
+
+    footer { text-align: center; padding: 24px; border-top: 0.5px solid var(--border); }
+    footer p { font-size: 13px; color: var(--text-hint); }
+    footer a { color: var(--green); text-decoration: none; }
+
+    @media (max-width: 500px) {
+      .redeem-card { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="https://www.getkeepsay.com" class="nav-logo">
+      <div class="nav-logo-icon"><img src="/icon.png" alt="Keepsay" style="width:32px;height:32px;border-radius:8px;"></div>
+      <span class="nav-logo-name">Keepsay</span>
+    </a>
+  </nav>
+
+  <main>
+    <!-- LOADING STATE -->
+    <div class="loading" id="loading-state">
+      <div class="loading-icon">🌿</div>
+      <p style="color: var(--text-secondary); font-size: 15px;">Loading your gift...</p>
+    </div>
+
+    <!-- ERROR STATE -->
+    <div class="error-state" id="error-state" style="display:none;">
+      <div class="error-icon">😔</div>
+      <div class="error-title">Gift not found</div>
+      <p class="error-sub">This gift link may have already been redeemed or the link may be incorrect.</p>
+      <p class="error-contact">Questions? <a href="mailto:hello@stubborngood.co">hello@stubborngood.co</a></p>
+    </div>
+
+    <!-- GIFT CARD -->
+    <div class="redeem-card" id="gift-card" style="display:none;">
+      <span class="gift-icon">🎁</span>
+      <div class="gifter-intro">A gift from</div>
+      <div class="gifter-name" id="gifter-name">Someone special</div>
+      <div class="gift-plan" id="gift-plan">Keepsay Pro — 1 Year</div>
+
+      <div class="gift-message-box" id="message-box" style="display:none;">
+        <div class="gift-message-label">Their message to you</div>
+        <div class="gift-message-text" id="gift-message"></div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="redeem-title">Your gift is ready 🌿</div>
+      <p class="redeem-sub">Download Keepsay and enter your gift code to activate your subscription — no credit card needed.</p>
+
+      <div class="download-btns">
+        <a href="https://apps.apple.com/app/keepsay/id0000000000" class="download-btn ios" id="ios-btn">
+          <span class="download-btn-icon">🍎</span> Download on the App Store
+        </a>
+        <a href="https://play.google.com/store/apps/details?id=com.keepsay" class="download-btn android" id="android-btn">
+          <span class="download-btn-icon">▶</span> Get it on Google Play
+        </a>
+      </div>
+
+      <hr class="divider">
+
+      <div class="manual-code">
+        <div class="manual-code-label">Your gift code — enter this in the Keepsay app under Profile → Redeem Gift</div>
+        <div class="code-display">
+          <div class="code-value" id="code-display">——————</div>
+        </div>
+        <button class="code-copy-btn" onclick="copyCode()">Copy code</button>
+        <p class="code-instructions">Open Keepsay → tap Profile → tap "Redeem a gift" → enter this code. Valid for one year.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Questions? <a href="mailto:hello@stubborngood.co">hello@stubborngood.co</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
+  </footer>
+
+  <script>
+    const TIER_LABELS = {
+      pro_monthly: 'Keepsay Pro — 1 Month',
+      pro_annual: 'Keepsay Pro — 1 Year',
+      legacy_monthly: 'Keepsay Legacy — 1 Month',
+      legacy_annual: 'Keepsay Legacy — 1 Year',
+    };
+
+    let giftCode = '';
+
+    async function loadGift() {
+      // Get code from URL: /redeem/ABCDEF or ?code=ABCDEF
+      const path = window.location.pathname;
+      const pathCode = path.split('/').pop();
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = pathCode.length === 6 ? pathCode : urlParams.get('code');
+
+      if (!code) {
+        showError();
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/get-gift?code=' + code);
+        const data = await response.json();
+
+        if (!data || data.error || data.redeemed_at) {
+          showError();
+          return;
+        }
+
+        giftCode = data.code;
+        showGift(data);
+      } catch (e) {
+        showError();
+      }
+    }
+
+    function showGift(data) {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('gift-card').style.display = 'block';
+      document.getElementById('gifter-name').textContent = data.gifter_name || 'Someone special';
+      document.getElementById('gift-plan').textContent = TIER_LABELS[data.tier] || 'Keepsay Pro';
+      document.getElementById('code-display').textContent = data.code;
+
+      if (data.message) {
+        document.getElementById('gift-message').textContent = data.message;
+        document.getElementById('message-box').style.display = 'block';
+      }
+    }
+
+    function showError() {
+      document.getElementById('loading-state').style.display = 'none';
+      document.getElementById('error-state').style.display = 'block';
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(giftCode).then(() => {
+        const btn = document.querySelector('.code-copy-btn');
+        btn.textContent = 'Copied! ✓';
+        btn.style.borderColor = 'var(--green)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+          btn.textContent = 'Copy code';
+          btn.style.borderColor = '';
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
+
+    loadGift();
+  </script>
+</body>
+</html>
+

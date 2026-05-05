@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keepsay - A memory is waiting for you</title>
+  <meta property="og:title" content="Someone shared a memory with you on Keepsay" />
+  <meta property="og:description" content="Keep what you want to say to the people you love." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F7F5F0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .top-bar { width: 100%; background: #1B4332; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+    .top-bar-logo { width: 36px; height: 36px; background: rgba(255,255,255,0.15); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; font-family: Georgia, serif; }
+    .top-bar-name { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+    .top-bar-tag { font-size: 13px; color: rgba(255,255,255,0.6); margin-left: auto; }
+    .container { width: 100%; max-width: 520px; padding: 32px 20px 60px; }
+    .card { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 24px rgba(0,0,0,0.08); margin-bottom: 24px; }
+    .card-photo { width: 100%; height: 280px; object-fit: cover; display: block; }
+    .card-photo-placeholder { width: 100%; height: 160px; background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%); display: flex; align-items: center; justify-content: center; }
+    .card-photo-placeholder-k { font-size: 64px; font-weight: 700; color: rgba(255,255,255,0.3); font-family: Georgia, serif; }
+    .card-body { padding: 24px; }
+    .from-label { font-size: 12px; font-weight: 600; color: #1B4332; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .memory-title { font-size: 24px; font-weight: 700; color: #1A1A1A; line-height: 1.3; margin-bottom: 8px; }
+    .memory-date { font-size: 13px; color: #8A8A8A; margin-bottom: 16px; }
+    .memory-body { font-size: 15px; color: #444; line-height: 1.7; margin-top: 12px; }
+    .memory-message { font-size: 15px; color: #444; line-height: 1.6; font-style: italic; padding: 14px 16px; background: #F7F5F0; border-radius: 10px; border-left: 3px solid #D4A853; margin-top: 12px; }
+    .locked-box { text-align: center; padding: 28px 16px; background: #F5F0E8; border-radius: 16px; margin-top: 16px; border: 1px solid #D4C4A8; }
+    .locked-icon { font-size: 40px; margin-bottom: 12px; }
+    .locked-title { font-size: 18px; font-weight: 700; color: #5C4A2A; margin-bottom: 8px; }
+    .locked-text { font-size: 14px; color: #8A7A5A; line-height: 1.6; margin-bottom: 20px; }
+    .countdown { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
+    .countdown-unit { text-align: center; background: #fff; border-radius: 12px; padding: 12px 16px; min-width: 64px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .countdown-number { font-size: 32px; font-weight: 700; color: #1B4332; line-height: 1; }
+    .countdown-label { font-size: 11px; color: #8A8A8A; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+    .unlock-date { font-size: 13px; color: #8A7A5A; margin-top: 8px; }
+    .download-section { text-align: center; padding: 8px 0; }
+    .download-title { font-size: 18px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+    .download-sub { font-size: 14px; color: #6B6B6B; line-height: 1.5; margin-bottom: 24px; }
+    .download-btn { display: inline-block; background: #1B4332; color: #fff; font-size: 16px; font-weight: 600; padding: 16px 32px; border-radius: 50px; text-decoration: none; margin-bottom: 12px; width: 100%; text-align: center; }
+    .download-btn:hover { background: #2D6A4F; }
+    .footer { text-align: center; font-size: 12px; color: #A0A0A0; margin-top: 32px; line-height: 1.6; }
+    .loading { text-align: center; padding: 80px 20px; color: #6B6B6B; font-size: 16px; }
+    .error { text-align: center; padding: 60px 20px; }
+    .error-icon { font-size: 48px; margin-bottom: 16px; }
+    .error-title { font-size: 20px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px; }
+    .error-sub { font-size: 15px; color: #6B6B6B; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <div class="top-bar-logo">K</div>
+    <div class="top-bar-name">Keepsay</div>
+    <div class="top-bar-tag">Keep what you want to say</div>
+  </div>
+  <div class="container">
+    <div id="content"><div class="loading">Loading your memory...</div></div>
+    <div class="download-section">
+      <div class="download-title">Receive memories on Keepsay</div>
+      <div class="download-sub">Download the app to reply with your own memory and stay connected with the people you love.</div>
+      <a href="https://apps.apple.com/app/keepsay" class="download-btn">Download Keepsay - iOS</a>
+    </div>
+    <div class="footer">Keepsay &mdash; Keep what you want to say to the people you love.<br/>Your memories are yours forever.</div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
+    const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY };
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id') || '';
+
+    // UUID = 36 chars with dashes = old shared_memories path
+    // 12 char token = new QR share_tokens path
+    const isUUID = id.length === 36 && id.split('-').length === 5;
+
+    async function loadMemory() {
+      if (!id) { showDefault(); return; }
+      if (isUUID) {
+        await loadSharedMemory(id);
+      } else {
+        await loadQRMemory(id);
+      }
+    }
+
+    async function loadQRMemory(token) {
+      try {
+        const url = SUPABASE_URL + '/rest/v1/share_tokens?token=eq.' + token + '&select=*';
+        const res = await fetch(url, { headers });
+        const text = await res.text();
+        const data = JSON.parse(text);
+        if (!data || data.length === 0) {
+          document.getElementById('content').innerHTML = '<div style="padding:20px;font-family:monospace;font-size:11px;word-break:break-all"><b>Debug:</b><br>URL: ' + url + '<br>Status: ' + res.status + '<br>Body: ' + text.substring(0,300) + '</div>';
+          return;
+        }
+        const shareToken = data[0];
+
+        const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + shareToken.entry_id + '&select=*', { headers });
+        const entryData = await entryRes.json();
+        if (!entryData || entryData.length === 0) { showError(); return; }
+        const entry = entryData[0];
+
+        const profileRes = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shareToken.user_id + '&select=display_name,email', { headers });
+        const profileData = await profileRes.json();
+        const senderName = profileData?.[0]?.display_name || profileData?.[0]?.email?.split('@')[0] || 'Someone special';
+
+        renderQRMemory(entry, shareToken, senderName);
+      } catch(e) {
+        showError();
+      }
+    }
+
+    function renderQRMemory(entry, shareToken, senderName) {
+      const date = new Date(entry.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const photoHtml = entry.photo_url
+        ? '<img src="' + entry.photo_url + '" class="card-photo" alt="Memory photo" />'
+        : '<div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>';
+
+      const recipientLabel = shareToken.recipient_name ? 'For ' + shareToken.recipient_name + ', from ' + senderName : 'A memory from ' + senderName;
+
+      // Check if still locked
+      const stillLocked = entry.is_locked && entry.unlock_date && new Date() < new Date(entry.unlock_date);
+
+      let bodyHtml = '';
+      if (stillLocked) {
+        const unlockDate = new Date(entry.unlock_date);
+        const formatted = unlockDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        bodyHtml = '<div class="locked-box">' +
+          '<div class="locked-icon">🔒</div>' +
+          '<div class="locked-title">This memory is sealed</div>' +
+          '<div class="locked-text">A special memory is waiting for you. It will reveal itself on ' + formatted + '.</div>' +
+          '<div class="countdown" id="countdown"></div>' +
+          '<div class="unlock-date">Unlocks ' + formatted + '</div>' +
+          '</div>';
+      } else if (!entry.is_locked) {
+        bodyHtml = (entry.body ? '<div class="memory-body">' + entry.body.split('\n').join('<br>') + '</div>' : '');
+      }
+
+      document.getElementById('content').innerHTML =
+        '<div class="card">' + photoHtml +
+        '<div class="card-body">' +
+        '<div class="from-label">' + recipientLabel + '</div>' +
+        '<div class="memory-title">' + (entry.title || 'A memory for you') + '</div>' +
+        '<div class="memory-date">' + date + '</div>' +
+        bodyHtml +
+        '</div></div>';
+
+      if (stillLocked) {
+        startCountdown(new Date(entry.unlock_date));
+      }
+    }
+
+    function startCountdown(unlockDate) {
+      function update() {
+        const now = new Date();
+        const diff = unlockDate - now;
+        if (diff <= 0) {
+          // Time's up — reload to reveal
+          window.location.reload();
+          return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+        const el = document.getElementById('countdown');
+        if (el) {
+          el.innerHTML =
+            unit(days, 'Days') + unit(hours, 'Hours') + unit(mins, 'Mins') + unit(secs, 'Secs');
+        }
+      }
+      function unit(n, label) {
+        return '<div class="countdown-unit"><div class="countdown-number">' + String(n).padStart(2,'0') + '</div><div class="countdown-label">' + label + '</div></div>';
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    async function loadSharedMemory(shareId) {
+      try {
+        const res = await fetch(SUPABASE_URL + '/rest/v1/shared_memories?id=eq.' + shareId + '&select=*', { headers });
+        const data = await res.json();
+        if (!data || data.length === 0) { showError(); return; }
+        const shared = data[0];
+        const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + shared.entry_id + '&select=*', { headers });
+        const entryData = await entryRes.json();
+        if (!entryData || entryData.length === 0) { showError(); return; }
+        const entry = entryData[0];
+        const senderRes = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shared.from_user_id + '&select=display_name,email', { headers });
+        const senderData = await senderRes.json();
+        const senderName = senderData?.[0]?.display_name || senderData?.[0]?.email?.split('@')[0] || 'Someone special';
+        renderSharedMemory(entry, shared, senderName);
+      } catch(e) { showError(); }
+    }
+
+    function renderSharedMemory(entry, shared, senderName) {
+      const date = new Date(entry.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const photoHtml = entry.photo_url
+        ? '<img src="' + entry.photo_url + '" class="card-photo" alt="Memory photo" />'
+        : '<div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>';
+      const messageHtml = shared.message ? '<div class="memory-message">"' + shared.message + '"</div>' : '';
+      const bodyHtml = entry.is_locked
+        ? '<div class="locked-box"><div class="locked-icon">🔒</div><div class="locked-title">This memory is sealed</div><div class="locked-text">This memory will open at the right moment.</div></div>'
+        : messageHtml;
+      document.getElementById('content').innerHTML =
+        '<div class="card">' + photoHtml +
+        '<div class="card-body">' +
+        '<div class="from-label">A memory from ' + senderName + '</div>' +
+        '<div class="memory-title">' + (entry.title || 'A memory for you') + '</div>' +
+        '<div class="memory-date">' + date + '</div>' +
+        bodyHtml + '</div></div>';
+    }
+
+    function showDefault() {
+      document.getElementById('content').innerHTML =
+        '<div class="card"><div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>' +
+        '<div class="card-body"><div class="memory-title">Someone wants to share a memory with you</div>' +
+        '<div class="memory-date">Download Keepsay to receive memories from the people you love</div></div></div>';
+    }
+
+    function showError() {
+      document.getElementById('content').innerHTML =
+        '<div class="error"><div class="error-icon">&#x1F48C;</div>' +
+        '<div class="error-title">Memory not found</div>' +
+        '<div class="error-sub">This link may have expired or the memory may have been removed.</div></div>';
+    }
+
+    loadMemory();
+  </script>
+</body>
+</html>
