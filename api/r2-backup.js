@@ -47,10 +47,6 @@ async function copyToR2(key, fileBuffer, contentType) {
 }
 
 module.exports = async function handler(req, res) {
-  // Security check — only allow requests with the correct token
-  const authHeader = req.headers['authorization'];
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
