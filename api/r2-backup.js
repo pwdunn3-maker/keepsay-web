@@ -1,11 +1,11 @@
 ﻿const { createClient } = require('@supabase/supabase-js');
-
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_TOKEN = process.env.R2_ACCESS_TOKEN;
 const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const R2_ENDPOINT = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+
+function getR2Endpoint() { return 'https://' + R2_ACCOUNT_ID + '.r2.cloudflarestorage.com'; }
 
 async function listSupabaseFiles(supabase, bucket, prefix, allFiles) {
   if (!prefix) prefix = '';
@@ -23,13 +23,13 @@ async function listSupabaseFiles(supabase, bucket, prefix, allFiles) {
 }
 
 async function fileExistsInR2(key) {
-  const url = R2_ENDPOINT + '/' + R2_BUCKET_NAME + '/' + key;
+  const url = getR2Endpoint() + '/' + R2_BUCKET_NAME + '/' + key;
   const res = await fetch(url, { method: 'HEAD', headers: { 'Authorization': 'Bearer ' + R2_ACCESS_TOKEN } });
   return res.ok;
 }
 
 async function copyToR2(key, fileBuffer, contentType) {
-  const url = R2_ENDPOINT + '/' + R2_BUCKET_NAME + '/' + key;
+  const url = getR2Endpoint() + '/' + R2_BUCKET_NAME + '/' + key;
   const res = await fetch(url, {
     method: 'PUT',
     headers: { 'Authorization': 'Bearer ' + R2_ACCESS_TOKEN, 'Content-Type': contentType || 'application/octet-stream' },
