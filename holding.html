@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keepsay &ndash; Launching late May 2026</title>
+  <meta name="description" content="Keepsay is launching late May 2026. Keep what you want to say to the people you love." />
+  <meta property="og:title" content="Keepsay &ndash; Launching late May 2026" />
+  <meta property="og:description" content="Keep what you want to say to the people you love. Launching late May 2026." />
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /*
+      ============================================================
+      KEEPSAY PRE-LAUNCH HOLDING PAGE
+
+      This page is served for ALL HTML routes on getkeepsay.com
+      until launch. The full marketing site (index.html, gift.html,
+      etc.) is intentionally preserved on disk but routed away from
+      via vercel.json.
+
+      TO RESTORE THE FULL MARKETING SITE AT LAUNCH:
+        git revert <commit-sha>
+        git push origin main
+
+      The commit message for the holding-page deploy has full
+      reversal instructions. Run: git log --oneline | head -5
+      ============================================================
+    */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #1B4332;
+      --gold: #D4A853;
+      --cream: #FAFAF6;
+      --text: #1A1A1A;
+      --text-secondary: #5C5C5C;
+      --text-hint: #9A9A9A;
+      --border: #E4E1D8;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+    }
+    .holding {
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo-tile {
+      width: 120px;
+      height: 120px;
+      background: var(--green);
+      border-radius: 24px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-tile img {
+      width: 96px;
+      height: 96px;
+      display: block;
+    }
+    .wordmark {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 36px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+    }
+    .tagline {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 20px;
+      font-style: italic;
+      color: var(--green);
+      line-height: 1.5;
+      margin-bottom: 40px;
+    }
+    .status-badge {
+      display: inline-block;
+      background: rgba(212,168,83,0.15);
+      border: 1px solid rgba(212,168,83,0.4);
+      color: #A07830;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 8px 20px;
+      border-radius: 50px;
+      margin-bottom: 24px;
+    }
+    .launch-message {
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 40px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .contact {
+      font-size: 15px;
+      color: var(--text-secondary);
+    }
+    .contact a {
+      color: var(--green);
+      text-decoration: none;
+      font-weight: 500;
+      border-bottom: 1px solid rgba(27,67,50,0.2);
+      transition: border-color 0.2s;
+    }
+    .contact a:hover {
+      border-bottom-color: var(--green);
+    }
+    footer {
+      padding: 32px 24px;
+      border-top: 0.5px solid var(--border);
+      text-align: center;
+    }
+    footer p {
+      font-size: 12px;
+      color: var(--text-hint);
+    }
+    @media (max-width: 600px) {
+      .logo-tile { width: 96px; height: 96px; border-radius: 20px; }
+      .logo-tile img { width: 76px; height: 76px; }
+      .wordmark { font-size: 30px; }
+      .tagline { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <main>
+    <div class="holding">
+      <div class="logo-tile">
+        <img src="/logo-kheart.png" alt="Keepsay" />
+      </div>
+      <h1 class="wordmark">Keepsay</h1>
+      <p class="tagline">Keep what you want to say to the people you love.</p>
+      <div class="status-badge">Launching late May 2026</div>
+      <p class="launch-message">We&rsquo;re putting the finishing touches on Keepsay. The app will be available on the App Store and Google Play very soon.</p>
+      <p class="contact">Questions? <a href="mailto:hello@stubborngood.co">hello@stubborngood.co</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Stubborn Good LLC &middot; Your memories are yours forever.</p>
+  </footer>
+
+</body>
+</html>

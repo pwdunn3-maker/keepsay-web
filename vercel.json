@@ -1,15 +1,10 @@
 {
   "routes": [
-    { "src": "/reset", "dest": "/reset.html" },
-    { "src": "/memory", "dest": "/memory.html" },
-    { "src": "/memory/(.*)", "dest": "/memory.html" },
-    { "src": "/invite/([^/]+)", "dest": "/invite.html" },
-    { "src": "/invite", "dest": "/invite.html" },
-    { "src": "/gift", "status": 302, "headers": { "Location": "/" } },
-    { "src": "/gift.html", "status": 302, "headers": { "Location": "/" } },
-    { "src": "/redeem/([^/]+)", "dest": "/redeem.html" },
-    { "src": "/redeem", "dest": "/redeem.html" },
-    { "src": "/api/(.*)", "dest": "/api/$1.js" }
+    { "src": "/logo-kheart.png", "dest": "/logo-kheart.png" },
+    { "src": "/icon.png", "dest": "/icon.png" },
+    { "src": "/api/(.*)", "dest": "/api/$1.js" },
+    { "src": "/(.*)\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|otf|json|xml|txt)", "dest": "/$1.$2" },
+    { "src": "/(.*)", "dest": "/holding.html" }
   ],
   "crons": [
     {
