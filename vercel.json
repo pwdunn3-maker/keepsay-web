@@ -5,7 +5,8 @@
     { "src": "/memory/(.*)", "dest": "/memory.html" },
     { "src": "/invite/([^/]+)", "dest": "/invite.html" },
     { "src": "/invite", "dest": "/invite.html" },
-    { "src": "/gift", "dest": "/gift.html" },
+    { "src": "/gift", "status": 302, "headers": { "Location": "/" } },
+    { "src": "/gift.html", "status": 302, "headers": { "Location": "/" } },
     { "src": "/redeem/([^/]+)", "dest": "/redeem.html" },
     { "src": "/redeem", "dest": "/redeem.html" },
     { "src": "/api/(.*)", "dest": "/api/$1.js" }
