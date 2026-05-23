@@ -17,7 +17,7 @@ module.exports = async function handler(req, res) {
   if (!token) return res.status(400).json({ error: 'Token required' });
 
   try {
-    // Look up the share token to get entry_id
+    // Step 1 — look up the share token
     const { data: tokenData, error: tokenError } = await supabase
       .from('share_tokens')
       .select('entry_id')
@@ -25,38 +25,38 @@ module.exports = async function handler(req, res) {
       .single();
 
     if (tokenError || !tokenData) {
-      return res.status(404).json({ error: 'Token not found' });
+      return res.status(404).json({ error: 'Token not found', detail: tokenError?.message });
     }
 
-    // Fetch the entry
+    // Step 2 — fetch the entry (service role bypasses RLS)
     const { data: entry, error: entryError } = await supabase
       .from('entries')
-      .select('recording_url, recording_uri, video_url')
+      .select('recording_url, video_url')
       .eq('id', tokenData.entry_id)
       .single();
 
     if (entryError || !entry) {
-      return res.status(404).json({ error: 'Entry not found' });
+      return res.status(404).json({ error: 'Entry not found', detail: entryError?.message, entry_id: tokenData.entry_id });
     }
 
     const result = {};
 
-    // Generate signed URL for voice recording
-    const recordingPath = entry.recording_url || entry.recording_uri;
-    if (recordingPath) {
-      // Strip any leading slash
-      const cleanPath = recordingPath.replace(/^\//, '');
+    // Step 3 — generate signed URL for voice recording
+    if (entry.recording_url) {
+      const cleanPath = entry.recording_url.replace(/^\//, '');
       const { data: signedRecording, error: recError } = await supabase
         .storage
         .from('memories')
         .createSignedUrl(cleanPath, SIGNED_URL_EXPIRY);
 
-      if (!recError && signedRecording?.signedUrl) {
+      if (recError) {
+        console.error('Recording signing error:', recError.message, 'path:', cleanPath);
+      } else if (signedRecording?.signedUrl) {
         result.recording_url = signedRecording.signedUrl;
       }
     }
 
-    // Generate signed URL for video
+    // Step 4 — generate signed URL for video
     if (entry.video_url) {
       const cleanPath = entry.video_url.replace(/^\//, '');
       const { data: signedVideo, error: vidError } = await supabase
@@ -64,7 +64,9 @@ module.exports = async function handler(req, res) {
         .from('memories')
         .createSignedUrl(cleanPath, SIGNED_URL_EXPIRY);
 
-      if (!vidError && signedVideo?.signedUrl) {
+      if (vidError) {
+        console.error('Video signing error:', vidError.message, 'path:', cleanPath);
+      } else if (signedVideo?.signedUrl) {
         result.video_url = signedVideo.signedUrl;
       }
     }
