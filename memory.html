@@ -106,7 +106,6 @@
 
   <script>
     const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
-    const STORAGE_BASE = 'https://amijtfctukogekemryjq.supabase.co/storage/v1/object/public/memories/';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
     const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY };
 
@@ -114,19 +113,13 @@
     const id = params.get('id') || '';
     const isUUID = id.length === 36 && id.split('-').length === 5;
 
-    // Convert stored path to full public URL
-    function mediaUrl(path) {
-      if (!path) return null;
-      if (path.startsWith('http')) return path;
-      return STORAGE_BASE + path;
-    }
-
     async function loadMemory() {
       if (!id) { showDefault(); return; }
       if (isUUID) { await loadSharedMemory(id); }
       else { await loadQRMemory(id); }
     }
 
+    // QR / share_tokens path — calls get-signed-media for audio/video URLs
     async function loadQRMemory(token) {
       try {
         const tokenRes = await fetch(
@@ -137,56 +130,94 @@
         if (!tokenData || tokenData.length === 0) { showError(); return; }
         const { entry_id, user_id, recipient_name } = tokenData[0];
 
-        const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + entry_id + '&select=*', { headers });
+        const entryRes = await fetch(
+          SUPABASE_URL + '/rest/v1/entries?id=eq.' + entry_id + '&select=*',
+          { headers }
+        );
         const entryData = await entryRes.json();
         if (!entryData || entryData.length === 0) { showError(); return; }
+        const entry = entryData[0];
 
-        const profileRes = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + user_id + '&select=display_name,email', { headers });
+        const profileRes = await fetch(
+          SUPABASE_URL + '/rest/v1/profiles?id=eq.' + user_id + '&select=display_name,email',
+          { headers }
+        );
         const profileData = await profileRes.json();
-        const senderName = profileData?.[0]?.display_name || profileData?.[0]?.email?.split('@')[0] || 'Someone special';
+        const senderName = profileData?.[0]?.display_name ||
+          profileData?.[0]?.email?.split('@')[0] || 'Someone special';
         const recipientLabel = recipient_name
           ? 'A memory from ' + senderName + ' — for ' + recipient_name
           : 'A memory from ' + senderName;
 
-        renderMemory(entryData[0], recipientLabel, null);
+        // Fetch signed media URLs server-side
+        const mediaRes = await fetch('/api/get-signed-media?token=' + encodeURIComponent(token));
+        const media = mediaRes.ok ? await mediaRes.json() : {};
+
+        renderMemory(entry, recipientLabel, null, media);
       } catch(e) { showError(); }
     }
 
+    // shared_memories (UUID) path — no signed media for now, uses existing share flow
     async function loadSharedMemory(shareId) {
       try {
-        const res = await fetch(SUPABASE_URL + '/rest/v1/shared_memories?id=eq.' + shareId + '&select=*', { headers });
+        const res = await fetch(
+          SUPABASE_URL + '/rest/v1/shared_memories?id=eq.' + shareId + '&select=*',
+          { headers }
+        );
         const data = await res.json();
         if (!data || data.length === 0) { showError(); return; }
         const shared = data[0];
 
-        const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + shared.entry_id + '&select=*', { headers });
+        const entryRes = await fetch(
+          SUPABASE_URL + '/rest/v1/entries?id=eq.' + shared.entry_id + '&select=*',
+          { headers }
+        );
         const entryData = await entryRes.json();
         if (!entryData || entryData.length === 0) { showError(); return; }
+        const entry = entryData[0];
 
-        const senderRes = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shared.from_user_id + '&select=display_name,email', { headers });
+        const senderRes = await fetch(
+          SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shared.from_user_id + '&select=display_name,email',
+          { headers }
+        );
         const senderData = await senderRes.json();
-        const senderName = senderData?.[0]?.display_name || senderData?.[0]?.email?.split('@')[0] || 'Someone special';
+        const senderName = senderData?.[0]?.display_name ||
+          senderData?.[0]?.email?.split('@')[0] || 'Someone special';
 
-        renderMemory(entryData[0], 'A memory from ' + senderName, shared.message || null);
+        // For UUID path, use share token lookup if we can find one
+        const tokenRes = await fetch(
+          SUPABASE_URL + '/rest/v1/share_tokens?entry_id=eq.' + shared.entry_id + '&select=token&limit=1',
+          { headers }
+        );
+        const tokenData = await tokenRes.json();
+        let media = {};
+        if (tokenData && tokenData.length > 0) {
+          const mediaRes = await fetch('/api/get-signed-media?token=' + encodeURIComponent(tokenData[0].token));
+          if (mediaRes.ok) media = await mediaRes.json();
+        }
+
+        renderMemory(entry, 'A memory from ' + senderName, shared.message || null, media);
       } catch(e) { showError(); }
     }
 
-    function renderMemory(entry, recipientLabel, sharedMessage) {
+    function renderMemory(entry, recipientLabel, sharedMessage, media) {
       const date = new Date(entry.created_at).toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
       });
 
-      const resolvedPhoto = mediaUrl(entry.photo_url || entry.photo);
-      const photoHtml = resolvedPhoto
-        ? '<img src="' + resolvedPhoto + '" class="card-photo" alt="Memory photo" />'
+      const photoHtml = entry.photo_url
+        ? '<img src="' + entry.photo_url + '" class="card-photo" alt="Memory photo" />'
         : '<div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>';
 
-      const stillLocked = entry.is_locked && entry.unlock_date && new Date() < new Date(entry.unlock_date);
+      const stillLocked = entry.is_locked && entry.unlock_date &&
+        new Date() < new Date(entry.unlock_date);
 
       let bodyHtml = '';
       if (stillLocked) {
         const unlockDate = new Date(entry.unlock_date);
-        const formatted = unlockDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const formatted = unlockDate.toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
         bodyHtml =
           '<div class="locked-box">' +
           '<div class="locked-icon">🔒</div>' +
@@ -202,22 +233,20 @@
         if (sharedMessage) {
           bodyHtml += '<div class="memory-message">"' + sharedMessage + '"</div>';
         }
-        const recordingUrl = mediaUrl(entry.recording_url || entry.recordingUri);
-        if (recordingUrl) {
+        if (media.recording_url) {
           bodyHtml +=
             '<div class="media-section">' +
             '<div class="media-label">Voice memory</div>' +
             '<div class="audio-wrap">' +
-            '<audio controls preload="metadata" src="' + recordingUrl + '">Your browser does not support audio.</audio>' +
+            '<audio controls preload="metadata" src="' + media.recording_url + '">Your browser does not support audio.</audio>' +
             '</div></div>';
         }
-        const videoUrl = mediaUrl(entry.video_url);
-        if (videoUrl) {
+        if (media.video_url) {
           bodyHtml +=
             '<div class="media-section">' +
             '<div class="media-label">Video memory</div>' +
             '<div class="video-wrap">' +
-            '<video controls preload="metadata" playsinline src="' + videoUrl + '">Your browser does not support video.</video>' +
+            '<video controls preload="metadata" playsinline src="' + media.video_url + '">Your browser does not support video.</video>' +
             '</div></div>';
         }
       }
@@ -246,7 +275,9 @@
         if (el) el.innerHTML = unit(days,'Days') + unit(hours,'Hours') + unit(mins,'Mins') + unit(secs,'Secs');
       }
       function unit(n, label) {
-        return '<div class="countdown-unit"><div class="countdown-number">' + String(n).padStart(2,'0') + '</div><div class="countdown-label">' + label + '</div></div>';
+        return '<div class="countdown-unit"><div class="countdown-number">' +
+          String(n).padStart(2,'0') +
+          '</div><div class="countdown-label">' + label + '</div></div>';
       }
       update();
       setInterval(update, 1000);
