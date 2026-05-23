@@ -18,19 +18,13 @@
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-
-    /* NAV */
     nav { width: 100%; background: var(--green); padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 12px; }
     .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo-icon { width: 32px; height: 32px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
     .nav-logo-icon img { width: 32px; height: 32px; border-radius: 8px; display: block; }
     .nav-logo-name { font-size: 17px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
     .nav-tagline { font-size: 13px; color: rgba(255,255,255,0.55); margin-left: auto; }
-
-    /* CONTAINER */
     .container { width: 100%; max-width: 540px; margin: 0 auto; padding: 40px 20px 80px; }
-
-    /* MEMORY CARD */
     .memory-card { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 24px rgba(0,0,0,0.08); margin-bottom: 28px; }
     .card-photo { width: 100%; height: 280px; object-fit: cover; display: block; }
     .card-photo-placeholder { width: 100%; height: 140px; background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%); display: flex; align-items: center; justify-content: center; }
@@ -41,17 +35,11 @@
     .memory-date { font-size: 13px; color: var(--text-hint); margin-bottom: 18px; }
     .memory-body { font-size: 15px; color: var(--text-secondary); line-height: 1.75; }
     .memory-message { font-size: 15px; color: var(--text-secondary); line-height: 1.65; font-style: italic; padding: 14px 16px; background: var(--warm-gray); border-radius: 10px; border-left: 3px solid var(--gold); margin-top: 16px; }
-
-    /* VOICE PLAYER */
     .media-section { margin-top: 20px; }
     .media-label { font-size: 11px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 8px; }
     .audio-wrap { background: var(--green-light); border-radius: 12px; padding: 6px 10px; border: 1px solid #C8DDD4; }
     .audio-wrap audio { width: 100%; height: 44px; outline: none; display: block; }
-
-    /* VIDEO PLAYER */
     .video-wrap video { width: 100%; border-radius: 12px; background: #000; display: block; max-height: 360px; }
-
-    /* LOCKED */
     .locked-box { text-align: center; padding: 32px 20px; background: var(--warm-gray); border-radius: 16px; margin-top: 16px; border: 1px solid var(--border); }
     .locked-icon { font-size: 40px; margin-bottom: 12px; }
     .locked-title { font-family: 'Lora', serif; font-size: 20px; font-weight: 600; color: #5C4A2A; margin-bottom: 8px; }
@@ -61,8 +49,6 @@
     .countdown-number { font-family: 'Lora', serif; font-size: 30px; font-weight: 600; color: var(--green); line-height: 1; }
     .countdown-label { font-size: 10px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
     .unlock-date { font-size: 13px; color: #8A7A5A; margin-top: 8px; }
-
-    /* ACQUISITION */
     .acquisition-card { background: #fff; border-radius: 20px; padding: 32px 28px; box-shadow: 0 2px 24px rgba(0,0,0,0.08); margin-bottom: 28px; text-align: center; }
     .acquisition-divider { width: 40px; height: 2px; background: var(--gold); border-radius: 2px; margin: 0 auto 20px; }
     .acquisition-title { font-family: 'Lora', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 12px; }
@@ -73,28 +59,22 @@
     .store-btn:hover { opacity: 0.88; transform: translateY(-1px); }
     .store-btn-ios { background: var(--green); color: #fff; }
     .store-btn-android { background: #fff; color: var(--green); border: 2px solid var(--green); }
-
-    /* FOOTER */
     footer { text-align: center; font-size: 12px; color: var(--text-hint); line-height: 1.7; padding-top: 8px; }
     footer a { color: var(--green); text-decoration: none; }
-
-    /* STATES */
     .loading { text-align: center; padding: 80px 20px; color: var(--text-secondary); font-size: 16px; }
     .error-box { text-align: center; padding: 60px 20px; }
     .error-icon { font-size: 48px; margin-bottom: 16px; }
     .error-title { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
     .error-sub { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
-
     @media (max-width: 480px) {
       .memory-title { font-size: 22px; }
       .acquisition-title { font-size: 19px; }
       .countdown { gap: 8px; }
-      .countdown-unit { min-width: 54px; padding: 10px 10px; }
+      .countdown-unit { min-width: 54px; padding: 10px; }
     }
   </style>
 </head>
 <body>
-
   <nav>
     <a href="https://www.getkeepsay.com" class="nav-logo">
       <div class="nav-logo-icon"><img src="/icon.png" alt="Keepsay" /></div>
@@ -104,10 +84,7 @@
   </nav>
 
   <div class="container">
-
-    <div id="content">
-      <div class="loading">Loading your memory...</div>
-    </div>
+    <div id="content"><div class="loading">Loading your memory...</div></div>
 
     <div class="acquisition-card">
       <div class="acquisition-divider"></div>
@@ -125,31 +102,31 @@
       <a href="/privacy.html">Privacy</a> &nbsp;·&nbsp;
       <a href="/terms.html">Terms</a>
     </footer>
-
   </div>
 
   <script>
     const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
+    const STORAGE_BASE = 'https://amijtfctukogekemryjq.supabase.co/storage/v1/object/public/memories/';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
     const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY };
 
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id') || '';
-
-    // UUID (36 chars, 5 segments) = old shared_memories path
-    // Anything else = share_tokens path
     const isUUID = id.length === 36 && id.split('-').length === 5;
+
+    // Convert stored path to full public URL
+    function mediaUrl(path) {
+      if (!path) return null;
+      if (path.startsWith('http')) return path;
+      return STORAGE_BASE + path;
+    }
 
     async function loadMemory() {
       if (!id) { showDefault(); return; }
-      if (isUUID) {
-        await loadSharedMemory(id);
-      } else {
-        await loadQRMemory(id);
-      }
+      if (isUUID) { await loadSharedMemory(id); }
+      else { await loadQRMemory(id); }
     }
 
-    // --- QR / share_tokens path ---
     async function loadQRMemory(token) {
       try {
         const tokenRes = await fetch(
@@ -158,84 +135,58 @@
         );
         const tokenData = await tokenRes.json();
         if (!tokenData || tokenData.length === 0) { showError(); return; }
-
         const { entry_id, user_id, recipient_name } = tokenData[0];
 
-        const entryRes = await fetch(
-          SUPABASE_URL + '/rest/v1/entries?id=eq.' + entry_id + '&select=*',
-          { headers }
-        );
+        const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + entry_id + '&select=*', { headers });
         const entryData = await entryRes.json();
         if (!entryData || entryData.length === 0) { showError(); return; }
-        const entry = entryData[0];
 
-        const profileRes = await fetch(
-          SUPABASE_URL + '/rest/v1/profiles?id=eq.' + user_id + '&select=display_name,email',
-          { headers }
-        );
+        const profileRes = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + user_id + '&select=display_name,email', { headers });
         const profileData = await profileRes.json();
-        const senderName = profileData?.[0]?.display_name ||
-          profileData?.[0]?.email?.split('@')[0] || 'Someone special';
-
+        const senderName = profileData?.[0]?.display_name || profileData?.[0]?.email?.split('@')[0] || 'Someone special';
         const recipientLabel = recipient_name
           ? 'A memory from ' + senderName + ' — for ' + recipient_name
           : 'A memory from ' + senderName;
 
-        renderMemory(entry, recipientLabel, null);
+        renderMemory(entryData[0], recipientLabel, null);
       } catch(e) { showError(); }
     }
 
-    // --- shared_memories (UUID) path ---
     async function loadSharedMemory(shareId) {
       try {
-        const res = await fetch(
-          SUPABASE_URL + '/rest/v1/shared_memories?id=eq.' + shareId + '&select=*',
-          { headers }
-        );
+        const res = await fetch(SUPABASE_URL + '/rest/v1/shared_memories?id=eq.' + shareId + '&select=*', { headers });
         const data = await res.json();
         if (!data || data.length === 0) { showError(); return; }
         const shared = data[0];
 
-        const entryRes = await fetch(
-          SUPABASE_URL + '/rest/v1/entries?id=eq.' + shared.entry_id + '&select=*',
-          { headers }
-        );
+        const entryRes = await fetch(SUPABASE_URL + '/rest/v1/entries?id=eq.' + shared.entry_id + '&select=*', { headers });
         const entryData = await entryRes.json();
         if (!entryData || entryData.length === 0) { showError(); return; }
-        const entry = entryData[0];
 
-        const senderRes = await fetch(
-          SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shared.from_user_id + '&select=display_name,email',
-          { headers }
-        );
+        const senderRes = await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shared.from_user_id + '&select=display_name,email', { headers });
         const senderData = await senderRes.json();
-        const senderName = senderData?.[0]?.display_name ||
-          senderData?.[0]?.email?.split('@')[0] || 'Someone special';
+        const senderName = senderData?.[0]?.display_name || senderData?.[0]?.email?.split('@')[0] || 'Someone special';
 
-        renderMemory(entry, 'A memory from ' + senderName, shared.message || null);
+        renderMemory(entryData[0], 'A memory from ' + senderName, shared.message || null);
       } catch(e) { showError(); }
     }
 
-    // --- Unified render ---
     function renderMemory(entry, recipientLabel, sharedMessage) {
       const date = new Date(entry.created_at).toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
       });
 
-      const photoHtml = entry.photo_url
-        ? '<img src="' + entry.photo_url + '" class="card-photo" alt="Memory photo" />'
+      const resolvedPhoto = mediaUrl(entry.photo_url || entry.photo);
+      const photoHtml = resolvedPhoto
+        ? '<img src="' + resolvedPhoto + '" class="card-photo" alt="Memory photo" />'
         : '<div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>';
 
-      const stillLocked = entry.is_locked && entry.unlock_date &&
-        new Date() < new Date(entry.unlock_date);
+      const stillLocked = entry.is_locked && entry.unlock_date && new Date() < new Date(entry.unlock_date);
 
       let bodyHtml = '';
-
       if (stillLocked) {
         const unlockDate = new Date(entry.unlock_date);
-        const formatted = unlockDate.toLocaleDateString('en-US', {
-          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-        });
+        const formatted = unlockDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         bodyHtml =
           '<div class="locked-box">' +
           '<div class="locked-icon">🔒</div>' +
@@ -245,41 +196,34 @@
           '<div class="unlock-date">Unlocks ' + formatted + '</div>' +
           '</div>';
       } else {
-        // Written body
         if (entry.body) {
           bodyHtml += '<div class="memory-body">' + entry.body.split('\n').join('<br>') + '</div>';
         }
-        // Personal message from sharer (UUID path)
         if (sharedMessage) {
           bodyHtml += '<div class="memory-message">"' + sharedMessage + '"</div>';
         }
-        // Voice recording
-        if (entry.recording_url) {
+        const recordingUrl = mediaUrl(entry.recording_url || entry.recordingUri);
+        if (recordingUrl) {
           bodyHtml +=
             '<div class="media-section">' +
             '<div class="media-label">Voice memory</div>' +
             '<div class="audio-wrap">' +
-            '<audio controls preload="metadata" src="' + entry.recording_url + '">' +
-            'Your browser does not support audio playback.' +
-            '</audio>' +
+            '<audio controls preload="metadata" src="' + recordingUrl + '">Your browser does not support audio.</audio>' +
             '</div></div>';
         }
-        // Video
-        if (entry.video_url) {
+        const videoUrl = mediaUrl(entry.video_url);
+        if (videoUrl) {
           bodyHtml +=
             '<div class="media-section">' +
             '<div class="media-label">Video memory</div>' +
             '<div class="video-wrap">' +
-            '<video controls preload="metadata" playsinline src="' + entry.video_url + '">' +
-            'Your browser does not support video playback.' +
-            '</video>' +
+            '<video controls preload="metadata" playsinline src="' + videoUrl + '">Your browser does not support video.</video>' +
             '</div></div>';
         }
       }
 
       document.getElementById('content').innerHTML =
-        '<div class="memory-card">' +
-        photoHtml +
+        '<div class="memory-card">' + photoHtml +
         '<div class="card-body">' +
         '<div class="from-label">' + recipientLabel + '</div>' +
         '<div class="memory-title">' + (entry.title || 'A memory for you') + '</div>' +
@@ -302,9 +246,7 @@
         if (el) el.innerHTML = unit(days,'Days') + unit(hours,'Hours') + unit(mins,'Mins') + unit(secs,'Secs');
       }
       function unit(n, label) {
-        return '<div class="countdown-unit"><div class="countdown-number">' +
-          String(n).padStart(2,'0') +
-          '</div><div class="countdown-label">' + label + '</div></div>';
+        return '<div class="countdown-unit"><div class="countdown-number">' + String(n).padStart(2,'0') + '</div><div class="countdown-label">' + label + '</div></div>';
       }
       update();
       setInterval(update, 1000);
@@ -313,10 +255,8 @@
     function showDefault() {
       document.getElementById('content').innerHTML =
         '<div class="memory-card"><div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>' +
-        '<div class="card-body">' +
-        '<div class="memory-title">Someone wants to share a memory with you</div>' +
-        '<div class="memory-date">Download Keepsay to receive memories from the people you love</div>' +
-        '</div></div>';
+        '<div class="card-body"><div class="memory-title">Someone wants to share a memory with you</div>' +
+        '<div class="memory-date">Download Keepsay to receive memories from the people you love</div></div></div>';
     }
 
     function showError() {
