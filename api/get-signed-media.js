@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
     // Step 2 — fetch the entry (service role bypasses RLS)
     const { data: entry, error: entryError } = await supabase
       .from('entries')
-      .select('recording_url, video_url')
+      .select('recording_url, video_url, photo_url')
       .eq('id', tokenData.entry_id)
       .single();
 
@@ -71,6 +71,19 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // Step 5 — generate signed URL for photo
+    if (entry.photo_url) {
+      const cleanPath = entry.photo_url.replace(/^\//, '');
+      const { data: signedPhoto, error: photoError } = await supabase
+        .storage
+        .from('memories')
+        .createSignedUrl(cleanPath, SIGNED_URL_EXPIRY);
+      if (photoError) {
+        console.error('Photo signing error:', photoError.message, 'path:', cleanPath);
+      } else if (signedPhoto?.signedUrl) {
+        result.photo_url = signedPhoto.signedUrl;
+      }
+    }
     return res.status(200).json(result);
 
   } catch (err) {
