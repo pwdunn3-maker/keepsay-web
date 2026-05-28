@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Keepsay — A memory is waiting for you</title>
+  <title>Keepsay &mdash; A memory is waiting for you</title>
   <meta property="og:title" content="Someone shared a memory with you on Keepsay" />
   <meta property="og:description" content="Keep what you want to say to the people you love." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,96 +12,515 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --green: #1B4332; --green-mid: #2D6A4F; --green-light: #E8F0EB;
-      --gold: #D4A853; --cream: #FAFAF6; --warm-gray: #F5F3EE;
-      --text: #1A1A1A; --text-secondary: #5C5C5C; --text-hint: #9A9A9A; --border: #E4E1D8;
+      --green: #1B4332;
+      --green-mid: #2D6A4F;
+      --green-dark: #0F2A1F;
+      --green-light: #E8F0EB;
+      --gold: #D4A853;
+      --gold-deep: #A67C2E;
+      --cream: #FAFAF6;
+      --warm-gray: #F5F3EE;
+      --text: #1A1A1A;
+      --text-secondary: #5C5C5C;
+      --text-hint: #9A9A9A;
+      --border: #E4E1D8;
     }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', sans-serif; background: var(--cream); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-    nav { width: 100%; background: var(--green); padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 12px; }
-    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
-    .nav-logo-icon { width: 32px; height: 32px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
-    .nav-logo-icon img { width: 32px; height: 32px; border-radius: 8px; display: block; }
-    .nav-logo-name { font-size: 17px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
-    .nav-tagline { font-size: 13px; color: rgba(255,255,255,0.55); margin-left: auto; }
-    .container { width: 100%; max-width: 540px; margin: 0 auto; padding: 40px 20px 80px; }
-    .memory-card { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 24px rgba(0,0,0,0.08); margin-bottom: 28px; }
-    .card-photo { width: 100%; height: 280px; object-fit: cover; display: block; }
-    .card-photo-placeholder { width: 100%; height: 140px; background: linear-gradient(135deg, var(--green) 0%, var(--green-mid) 100%); display: flex; align-items: center; justify-content: center; }
-    .card-photo-placeholder-k { font-family: 'Lora', Georgia, serif; font-size: 64px; font-weight: 600; color: rgba(255,255,255,0.25); }
-    .card-body { padding: 28px; }
-    .from-label { font-size: 11px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 10px; }
-    .memory-title { font-family: 'Lora', Georgia, serif; font-size: 26px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 6px; }
-    .memory-date { font-size: 13px; color: var(--text-hint); margin-bottom: 18px; }
-    .memory-body { font-size: 15px; color: var(--text-secondary); line-height: 1.75; }
-    .memory-message { font-size: 15px; color: var(--text-secondary); line-height: 1.65; font-style: italic; padding: 14px 16px; background: var(--warm-gray); border-radius: 10px; border-left: 3px solid var(--gold); margin-top: 16px; }
-    .media-section { margin-top: 20px; }
-    .media-label { font-size: 11px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.9px; margin-bottom: 8px; }
-    .audio-wrap { background: var(--green-light); border-radius: 12px; padding: 6px 10px; border: 1px solid #C8DDD4; }
-    .audio-wrap audio { width: 100%; height: 44px; outline: none; display: block; }
-    .video-wrap video { width: 100%; border-radius: 12px; background: #000; display: block; max-height: 360px; }
-    .locked-box { text-align: center; padding: 32px 20px; background: var(--warm-gray); border-radius: 16px; margin-top: 16px; border: 1px solid var(--border); }
-    .locked-icon { font-size: 40px; margin-bottom: 12px; }
-    .locked-title { font-family: 'Lora', serif; font-size: 20px; font-weight: 600; color: #5C4A2A; margin-bottom: 8px; }
-    .locked-text { font-size: 14px; color: #8A7A5A; line-height: 1.65; margin-bottom: 20px; }
-    .countdown { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
-    .countdown-unit { text-align: center; background: #fff; border-radius: 12px; padding: 12px 14px; min-width: 62px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-    .countdown-number { font-family: 'Lora', serif; font-size: 30px; font-weight: 600; color: var(--green); line-height: 1; }
-    .countdown-label { font-size: 10px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-    .unlock-date { font-size: 13px; color: #8A7A5A; margin-top: 8px; }
-    .acquisition-card { background: #fff; border-radius: 20px; padding: 32px 28px; box-shadow: 0 2px 24px rgba(0,0,0,0.08); margin-bottom: 28px; text-align: center; }
-    .acquisition-divider { width: 40px; height: 2px; background: var(--gold); border-radius: 2px; margin: 0 auto 20px; }
-    .acquisition-title { font-family: 'Lora', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 12px; }
-    .acquisition-title em { font-style: italic; color: var(--green); }
-    .acquisition-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 24px; max-width: 380px; margin-left: auto; margin-right: auto; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── REVEAL SCREEN ── */
+    #reveal {
+      position: fixed;
+      inset: 0;
+      background: var(--green-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 40px 32px;
+      text-align: center;
+      transition: opacity 0.8s ease;
+    }
+    #reveal.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #reveal.hidden { display: none; }
+    .reveal-envelope {
+      width: min(260px, 70vw);
+      margin-bottom: 40px;
+      animation: envelopeFloat 0.9s ease-out both;
+    }
+    @keyframes envelopeFloat {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal-divider {
+      width: 40px;
+      height: 1.5px;
+      background: var(--gold);
+      margin: 0 auto 20px;
+      animation: fadeIn 0.6s 0.5s ease both;
+    }
+    .reveal-sender {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 400;
+      color: #fff;
+      line-height: 1.4;
+      margin-bottom: 12px;
+      min-height: 1.4em;
+      animation: fadeIn 0.6s 0.4s ease both;
+    }
+    .reveal-sender em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .reveal-tagline {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 48px;
+      animation: fadeIn 0.6s 0.6s ease both;
+    }
+    .reveal-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      position: absolute;
+      bottom: 36px;
+      left: 0; right: 0;
+      text-align: center;
+      animation: fadeIn 0.6s 1s ease both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── MAIN PAGE ── */
+    #page {
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    #page.visible { opacity: 1; }
+
+    nav {
+      width: 100%;
+      background: var(--green);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-icon {
+      width: 30px; height: 30px;
+      border-radius: 7px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .nav-logo-icon img { width: 30px; height: 30px; display: block; }
+    .nav-logo-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .nav-tagline {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+      margin-left: auto;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 36px 20px 80px;
+    }
+
+    /* ── MEMORY CARD ── */
+    .memory-card {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.09);
+      margin-bottom: 32px;
+    }
+
+    /* Photo / no-photo hero */
+    .card-photo {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      display: block;
+    }
+    .card-photo-placeholder {
+      width: 100%;
+      height: 220px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-photo-placeholder img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0.92;
+    }
+
+    /* Video hero */
+    .video-hero {
+      width: 100%;
+      max-height: 300px;
+      background: #000;
+      display: block;
+    }
+
+    .card-body { padding: 28px 28px 24px; }
+
+    .from-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      margin-bottom: 12px;
+    }
+    .memory-title {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+    .memory-date {
+      font-size: 13px;
+      color: var(--text-hint);
+      margin-bottom: 20px;
+    }
+    .memory-body {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 4px;
+    }
+    .memory-message {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      font-style: italic;
+      padding: 14px 18px;
+      background: var(--warm-gray);
+      border-radius: 10px;
+      border-left: 3px solid var(--gold);
+      margin-top: 20px;
+    }
+
+    /* ── AUDIO PLAYER ── */
+    .media-section { margin-top: 24px; }
+    .media-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      margin-bottom: 10px;
+    }
+    .audio-player {
+      background: var(--green);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .audio-play-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--gold);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .audio-play-btn:hover { background: #c49642; transform: scale(1.06); }
+    .audio-play-btn:active { transform: scale(0.97); }
+    .audio-play-btn svg { width: 18px; height: 18px; fill: #fff; }
+    .audio-right { flex: 1; min-width: 0; }
+    .audio-progress-wrap {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .audio-progress-fill {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s linear;
+      pointer-events: none;
+    }
+    .audio-time {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      font-variant-numeric: tabular-nums;
+    }
+    .audio-time span { color: rgba(255,255,255,0.9); }
+
+    /* Video (non-hero) */
+    .video-wrap video {
+      width: 100%;
+      border-radius: 12px;
+      background: #000;
+      display: block;
+      max-height: 320px;
+    }
+
+    /* ── LOCKED STATE ── */
+    .locked-box {
+      text-align: center;
+      padding: 36px 24px;
+      background: var(--warm-gray);
+      border-radius: 16px;
+      margin-top: 20px;
+      border: 1px solid var(--border);
+    }
+    .locked-icon { font-size: 40px; margin-bottom: 14px; }
+    .locked-title {
+      font-family: 'Lora', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: #5C4A2A;
+      margin-bottom: 8px;
+    }
+    .locked-text {
+      font-size: 14px;
+      color: #8A7A5A;
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
+    .countdown {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .countdown-unit {
+      text-align: center;
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      min-width: 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .countdown-number {
+      font-family: 'Lora', serif;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--green);
+      line-height: 1;
+    }
+    .countdown-label {
+      font-size: 10px;
+      color: var(--text-hint);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+    .unlock-date {
+      font-size: 13px;
+      color: #8A7A5A;
+      margin-top: 10px;
+    }
+
+    /* ── ACQUISITION CARD ── */
+    .acquisition-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 36px 28px;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.07);
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .acquisition-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .acquisition-divider-line {
+      width: 32px;
+      height: 1px;
+      background: var(--gold);
+      opacity: 0.6;
+    }
+    .acquisition-divider-heart {
+      color: var(--gold);
+      font-size: 13px;
+    }
+    .acquisition-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-deep);
+      margin-bottom: 12px;
+    }
+    .acquisition-title {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(18px, 4.5vw, 22px);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 14px;
+    }
+    .acquisition-title em {
+      font-style: italic;
+      color: var(--green);
+    }
+    .acquisition-body {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      margin-bottom: 28px;
+      max-width: 360px;
+      margin-left: auto;
+      margin-right: auto;
+    }
     .store-buttons { display: flex; flex-direction: column; gap: 12px; }
-    .store-btn { display: block; padding: 15px 24px; border-radius: 50px; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600; text-decoration: none; text-align: center; transition: opacity 0.15s, transform 0.1s; }
+    .store-btn {
+      display: block;
+      padding: 15px 24px;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.15s, transform 0.1s;
+    }
     .store-btn:hover { opacity: 0.88; transform: translateY(-1px); }
     .store-btn-ios { background: var(--green); color: #fff; }
-    .store-btn-android { background: #fff; color: var(--green); border: 2px solid var(--green); }
-    footer { text-align: center; font-size: 12px; color: var(--text-hint); line-height: 1.7; padding-top: 8px; }
-    footer a { color: var(--green); text-decoration: none; }
-    .loading { text-align: center; padding: 80px 20px; color: var(--text-secondary); font-size: 16px; }
+    .store-btn-android {
+      background: #fff;
+      color: var(--green);
+      border: 2px solid var(--green);
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-hint);
+      line-height: 1.8;
+      padding-top: 8px;
+    }
+    footer a { color: var(--green-mid); text-decoration: none; }
+
+    .loading {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--text-secondary);
+      font-size: 15px;
+    }
     .error-box { text-align: center; padding: 60px 20px; }
     .error-icon { font-size: 48px; margin-bottom: 16px; }
-    .error-title { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-    .error-sub { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+    .error-title {
+      font-family: 'Lora', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .error-sub {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
     @media (max-width: 480px) {
-      .memory-title { font-size: 22px; }
-      .acquisition-title { font-size: 19px; }
-      .countdown { gap: 8px; }
-      .countdown-unit { min-width: 54px; padding: 10px; }
+      .memory-title { font-size: 20px; }
+      .acquisition-title { font-size: 18px; }
+      .countdown { gap: 7px; }
+      .countdown-unit { min-width: 52px; padding: 10px; }
+      .card-body { padding: 22px 20px 20px; }
     }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="https://www.getkeepsay.com" class="nav-logo">
-      <div class="nav-logo-icon"><img src="/icon.png" alt="Keepsay" /></div>
-      <span class="nav-logo-name">Keepsay</span>
-    </a>
-    <span class="nav-tagline">Keep what you want to say</span>
-  </nav>
 
-  <div class="container">
-    <div id="content"><div class="loading">Loading your memory...</div></div>
+  <!-- REVEAL SCREEN -->
+  <div id="reveal" onclick="skipReveal()">
+    <img src="/envelope_seal.png" class="reveal-envelope" alt="A memory is waiting" />
+    <div class="reveal-divider"></div>
+    <div class="reveal-sender" id="reveal-sender">Someone kept something for you</div>
+    <div class="reveal-tagline">Some moments are meant to be felt, not just remembered.</div>
+    <div class="reveal-hint">Tap anywhere to open</div>
+  </div>
 
-    <div class="acquisition-card">
-      <div class="acquisition-divider"></div>
-      <div class="acquisition-title">Keep your own memories,<br><em>in your own words.</em></div>
-      <div class="acquisition-body">Keepsay lets you capture voice, video, and written memories and share them with the people you love — or seal them for a moment that hasn't arrived yet. No app needed to receive. Always yours to keep.</div>
-      <div class="store-buttons">
-        <a href="https://apps.apple.com/app/keepsay" class="store-btn store-btn-ios">Download on the App Store</a>
-        <a href="https://play.google.com/store/apps/details?id=com.keepsay.app" class="store-btn store-btn-android">Get it on Google Play</a>
+  <!-- MAIN PAGE -->
+  <div id="page">
+    <nav>
+      <a href="https://www.getkeepsay.com" class="nav-logo">
+        <div class="nav-logo-icon"><img src="/icon.png" alt="Keepsay" /></div>
+        <span class="nav-logo-name">Keepsay</span>
+      </a>
+      <span class="nav-tagline">Words today. Memories forever.</span>
+    </nav>
+
+    <div class="container">
+      <div id="content"><div class="loading">Opening your memory&hellip;</div></div>
+
+      <div class="acquisition-card">
+        <div class="acquisition-divider">
+          <div class="acquisition-divider-line"></div>
+          <span class="acquisition-divider-heart">&#9829;</span>
+          <div class="acquisition-divider-line"></div>
+        </div>
+        <div class="acquisition-eyebrow">Preserve your own memories</div>
+        <div class="acquisition-title">Capture the moments<br><em>before they soften.</em></div>
+        <div class="acquisition-body">Voice, video, and written memories &mdash; sealed for the people you love, or kept for a moment that hasn&rsquo;t arrived yet. No app needed to receive. Always yours to keep.</div>
+        <div class="store-buttons">
+          <a href="https://apps.apple.com/app/keepsay" class="store-btn store-btn-ios">Download on the App Store</a>
+          <a href="https://play.google.com/store/apps/details?id=com.keepsay.app" class="store-btn store-btn-android">Get it on Google Play</a>
+        </div>
       </div>
-    </div>
 
-    <footer>
-      Keepsay &mdash; Keep what you want to say to the people you love.<br/>
-      Your memories are yours forever. &nbsp;·&nbsp;
-      <a href="/privacy.html">Privacy</a> &nbsp;·&nbsp;
-      <a href="/terms.html">Terms</a>
-    </footer>
+      <footer>
+        Keepsay &mdash; Keep what you want to say to the people you love.<br/>
+        Your memories are yours forever. &nbsp;&middot;&nbsp;
+        <a href="/privacy.html">Privacy</a> &nbsp;&middot;&nbsp;
+        <a href="/terms.html">Terms</a>
+      </footer>
+    </div>
   </div>
 
   <script>
@@ -113,13 +532,47 @@
     const id = params.get('id') || '';
     const isUUID = id.length === 36 && id.split('-').length === 5;
 
+    let revealTimer = null;
+
+    // Start reveal timer — auto-advance after 4 seconds
+    function startReveal() {
+      revealTimer = setTimeout(function() {
+        transitionToPage();
+      }, 4000);
+    }
+
+    function skipReveal() {
+      if (revealTimer) clearTimeout(revealTimer);
+      transitionToPage();
+    }
+
+    function transitionToPage() {
+      const reveal = document.getElementById('reveal');
+      const page = document.getElementById('page');
+      reveal.classList.add('fade-out');
+      page.classList.add('visible');
+      setTimeout(function() {
+        reveal.classList.add('hidden');
+      }, 900);
+    }
+
+    // Update sender name in reveal screen once we have it
+    function setRevealSender(name) {
+      const el = document.getElementById('reveal-sender');
+      if (el && name) {
+        el.innerHTML = name + ' kept something <em>for you</em>';
+      }
+    }
+
+    // ── DATA LOADING ──
+
     async function loadMemory() {
+      startReveal();
       if (!id) { showDefault(); return; }
       if (isUUID) { await loadSharedMemory(id); }
       else { await loadQRMemory(id); }
     }
 
-    // QR / share_tokens path — calls get-signed-media for audio/video URLs
     async function loadQRMemory(token) {
       try {
         const tokenRes = await fetch(
@@ -145,11 +598,14 @@
         const profileData = await profileRes.json();
         const senderName = profileData?.[0]?.display_name ||
           profileData?.[0]?.email?.split('@')[0] || 'Someone special';
+
+        // Update reveal screen with sender name
+        setRevealSender(senderName);
+
         const recipientLabel = recipient_name
-          ? 'A memory from ' + senderName + ' — for ' + recipient_name
+          ? 'A memory from ' + senderName + ' &mdash; for ' + recipient_name
           : 'A memory from ' + senderName;
 
-        // Fetch signed media URLs server-side
         const mediaRes = await fetch('/api/get-signed-media?token=' + encodeURIComponent(token));
         const media = mediaRes.ok ? await mediaRes.json() : {};
 
@@ -157,7 +613,6 @@
       } catch(e) { showError(); }
     }
 
-    // shared_memories (UUID) path — no signed media for now, uses existing share flow
     async function loadSharedMemory(shareId) {
       try {
         const res = await fetch(
@@ -184,7 +639,8 @@
         const senderName = senderData?.[0]?.display_name ||
           senderData?.[0]?.email?.split('@')[0] || 'Someone special';
 
-        // For UUID path, use share token lookup if we can find one
+        setRevealSender(senderName);
+
         const tokenRes = await fetch(
           SUPABASE_URL + '/rest/v1/share_tokens?entry_id=eq.' + shared.entry_id + '&select=token&limit=1',
           { headers }
@@ -200,17 +656,26 @@
       } catch(e) { showError(); }
     }
 
+    // ── RENDERING ──
+
     function renderMemory(entry, recipientLabel, sharedMessage, media) {
       const date = new Date(entry.created_at).toLocaleDateString('en-US', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
       });
 
-      const photoHtml = entry.photo_url
-        ? '<img src="' + entry.photo_url + '" class="card-photo" alt="Memory photo" />'
-        : '<div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>';
-
       const stillLocked = entry.is_locked && entry.unlock_date &&
         new Date() < new Date(entry.unlock_date);
+
+      // Hero area — photo > video > placeholder
+      let heroHtml = '';
+      if (media.photo_url) {
+        heroHtml = '<img src="' + media.photo_url + '" class="card-photo" alt="Memory" />';
+      } else if (media.video_url && !entry.recording_url) {
+        // Video is the primary media — promote to hero
+        heroHtml = '<video class="video-hero" controls preload="metadata" playsinline src="' + media.video_url + '">Your browser does not support video.</video>';
+      } else {
+        heroHtml = '<div class="card-photo-placeholder"><img src="/memory_placeholder.jpg" alt="" /></div>';
+      }
 
       let bodyHtml = '';
       if (stillLocked) {
@@ -220,7 +685,7 @@
         });
         bodyHtml =
           '<div class="locked-box">' +
-          '<div class="locked-icon">🔒</div>' +
+          '<div class="locked-icon">&#128274;</div>' +
           '<div class="locked-title">This memory is sealed</div>' +
           '<div class="locked-text">A special memory is waiting for you. It will reveal itself on ' + formatted + '.</div>' +
           '<div class="countdown" id="countdown"></div>' +
@@ -231,17 +696,28 @@
           bodyHtml += '<div class="memory-body">' + entry.body.split('\n').join('<br>') + '</div>';
         }
         if (sharedMessage) {
-          bodyHtml += '<div class="memory-message">"' + sharedMessage + '"</div>';
+          bodyHtml += '<div class="memory-message">&ldquo;' + sharedMessage + '&rdquo;</div>';
         }
         if (media.recording_url) {
           bodyHtml +=
             '<div class="media-section">' +
             '<div class="media-label">Voice memory</div>' +
-            '<div class="audio-wrap">' +
-            '<audio controls preload="metadata" src="' + media.recording_url + '">Your browser does not support audio.</audio>' +
-            '</div></div>';
+            '<div class="audio-player" id="audio-player">' +
+            '<button class="audio-play-btn" id="play-btn" onclick="togglePlay()" aria-label="Play">' +
+            '<svg id="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
+            '</button>' +
+            '<div class="audio-right">' +
+            '<div class="audio-progress-wrap" id="progress-wrap" onclick="seekAudio(event)">' +
+            '<div class="audio-progress-fill" id="progress-fill"></div>' +
+            '</div>' +
+            '<div class="audio-time"><span id="current-time">0:00</span> / <span id="total-time">0:00</span></div>' +
+            '</div>' +
+            '</div>' +
+            '<audio id="audio-el" preload="metadata" src="' + media.recording_url + '"></audio>' +
+            '</div>';
         }
-        if (media.video_url) {
+        // Video as secondary (when photo is hero or recording exists)
+        if (media.video_url && (media.photo_url || media.recording_url)) {
           bodyHtml +=
             '<div class="media-section">' +
             '<div class="media-label">Video memory</div>' +
@@ -252,7 +728,7 @@
       }
 
       document.getElementById('content').innerHTML =
-        '<div class="memory-card">' + photoHtml +
+        '<div class="memory-card">' + heroHtml +
         '<div class="card-body">' +
         '<div class="from-label">' + recipientLabel + '</div>' +
         '<div class="memory-title">' + (entry.title || 'A memory for you') + '</div>' +
@@ -261,7 +737,56 @@
         '</div></div>';
 
       if (stillLocked) startCountdown(new Date(entry.unlock_date));
+      if (media.recording_url) initAudio();
     }
+
+    // ── CUSTOM AUDIO PLAYER ──
+
+    function initAudio() {
+      const audio = document.getElementById('audio-el');
+      if (!audio) return;
+      audio.addEventListener('loadedmetadata', function() {
+        document.getElementById('total-time').textContent = formatTime(audio.duration);
+      });
+      audio.addEventListener('timeupdate', function() {
+        const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('current-time').textContent = formatTime(audio.currentTime);
+      });
+      audio.addEventListener('ended', function() {
+        document.getElementById('play-icon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+      });
+    }
+
+    function togglePlay() {
+      const audio = document.getElementById('audio-el');
+      if (!audio) return;
+      if (audio.paused) {
+        audio.play();
+        document.getElementById('play-icon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      } else {
+        audio.pause();
+        document.getElementById('play-icon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+      }
+    }
+
+    function seekAudio(e) {
+      const audio = document.getElementById('audio-el');
+      const wrap = document.getElementById('progress-wrap');
+      if (!audio || !wrap) return;
+      const rect = wrap.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      audio.currentTime = pct * audio.duration;
+    }
+
+    function formatTime(s) {
+      if (isNaN(s)) return '0:00';
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return m + ':' + String(sec).padStart(2, '0');
+    }
+
+    // ── COUNTDOWN ──
 
     function startCountdown(unlockDate) {
       function update() {
@@ -283,18 +808,25 @@
       setInterval(update, 1000);
     }
 
+    // ── DEFAULT / ERROR STATES ──
+
     function showDefault() {
       document.getElementById('content').innerHTML =
-        '<div class="memory-card"><div class="card-photo-placeholder"><div class="card-photo-placeholder-k">K</div></div>' +
-        '<div class="card-body"><div class="memory-title">Someone wants to share a memory with you</div>' +
-        '<div class="memory-date">Download Keepsay to receive memories from the people you love</div></div></div>';
+        '<div class="memory-card">' +
+        '<div class="card-photo-placeholder"><img src="/memory_placeholder.jpg" alt="" /></div>' +
+        '<div class="card-body">' +
+        '<div class="memory-title">Someone wants to share a memory with you</div>' +
+        '<div class="memory-date">Download Keepsay to receive memories from the people you love</div>' +
+        '</div></div>';
     }
 
     function showError() {
       document.getElementById('content').innerHTML =
-        '<div class="error-box"><div class="error-icon">💌</div>' +
+        '<div class="error-box">' +
+        '<div class="error-icon">&#128140;</div>' +
         '<div class="error-title">Memory not found</div>' +
-        '<div class="error-sub">This link may have expired or the memory may have been removed.</div></div>';
+        '<div class="error-sub">This link may have expired or the memory may have been removed.</div>' +
+        '</div>';
     }
 
     loadMemory();
