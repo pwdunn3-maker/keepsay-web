@@ -1,4 +1,4 @@
-﻿{
+{
   "routes": [
     { "src": "/logo-kheart.png", "dest": "/logo-kheart.png" },
     { "src": "/icon.png", "dest": "/icon.png" },
