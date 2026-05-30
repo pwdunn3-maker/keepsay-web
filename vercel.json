@@ -1,4 +1,4 @@
-{
+﻿{
   "routes": [
     { "src": "/logo-kheart.png", "dest": "/logo-kheart.png" },
     { "src": "/icon.png", "dest": "/icon.png" },
@@ -13,6 +13,9 @@
     { "src": "/legal/terms", "dest": "/terms.html" },
     { "src": "/memory", "dest": "/memory.html" },
     { "src": "/memory.html", "dest": "/memory.html" },
+    { "src": "/support", "dest": "/support.html" },
+    { "src": "/support/", "dest": "/support.html" },
+    { "src": "/support.html", "dest": "/support.html" },
     { "src": "/(.*)\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|otf|json|xml|txt)", "dest": "/$1.$2" },
     { "src": "/(.*)", "dest": "/holding.html" }
   ],
