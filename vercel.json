@@ -17,6 +17,7 @@
     { "src": "/support/", "dest": "/support.html" },
     { "src": "/support.html", "dest": "/support.html" },
     { "src": "/(.*)\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|otf|json|xml|txt)", "dest": "/$1.$2" },
+    { "src": "/", "dest": "/index.html" },
     { "src": "/(.*)", "dest": "/holding.html" }
   ],
   "crons": [
