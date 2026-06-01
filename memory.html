@@ -524,10 +524,6 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
-    const headers = { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY };
-
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id') || '';
     const isUUID = id.length === 36 && id.split('-').length === 5;
@@ -564,104 +560,69 @@
       }
     }
 
-    // ── DATA LOADING ──
+    // ── DATA LOADING (server-resolved) ──
 
     async function loadMemory() {
       startReveal();
       if (!id) { showDefault(); return; }
-      if (isUUID) { await loadSharedMemory(id); }
-      else { await loadQRMemory(id); }
-    }
 
-    async function loadQRMemory(token) {
       try {
-        const tokenRes = await fetch(
-          SUPABASE_URL + '/rest/v1/share_tokens?token=eq.' + encodeURIComponent(token) + '&select=entry_id,user_id,recipient_name',
-          { headers }
-        );
-        const tokenData = await tokenRes.json();
-        if (!tokenData || tokenData.length === 0) { showError(); return; }
-        const { entry_id, user_id, recipient_name } = tokenData[0];
-
-        const entryRes = await fetch(
-          SUPABASE_URL + '/rest/v1/entries?id=eq.' + entry_id + '&select=*',
-          { headers }
-        );
-        const entryData = await entryRes.json();
-        if (!entryData || entryData.length === 0) { showError(); return; }
-        const entry = entryData[0];
-
-        const profileRes = await fetch(
-          SUPABASE_URL + '/rest/v1/profiles?id=eq.' + user_id + '&select=display_name,email',
-          { headers }
-        );
-        const profileData = await profileRes.json();
-        const senderName = profileData?.[0]?.display_name ||
-          profileData?.[0]?.email?.split('@')[0] || 'Someone special';
-
-        // Update reveal screen with sender name
-        setRevealSender(senderName);
-
-        const recipientLabel = recipient_name
-          ? 'A memory from ' + senderName + ' &mdash; for ' + recipient_name
-          : 'A memory from ' + senderName;
-
-        const mediaRes = await fetch('/api/get-signed-media?token=' + encodeURIComponent(token));
-        const media = mediaRes.ok ? await mediaRes.json() : {};
-
-        renderMemory(entry, recipientLabel, null, media);
-      } catch(e) { showError(); }
-    }
-
-    async function loadSharedMemory(shareId) {
-      try {
-        const res = await fetch(
-          SUPABASE_URL + '/rest/v1/shared_memories?id=eq.' + shareId + '&select=*',
-          { headers }
-        );
+        // One server call replaces the old token/shared_memories/entries/
+        // profiles chain. UUID -> ?id=, short token -> ?token=.
+        const qs = isUUID
+          ? 'id=' + encodeURIComponent(id)
+          : 'token=' + encodeURIComponent(id);
+        const res = await fetch('/api/get-memory?' + qs);
+        if (!res.ok) { showError(); return; }
         const data = await res.json();
-        if (!data || data.length === 0) { showError(); return; }
-        const shared = data[0];
+        if (!data || data.error) { showError(); return; }
 
-        const entryRes = await fetch(
-          SUPABASE_URL + '/rest/v1/entries?id=eq.' + shared.entry_id + '&select=*',
-          { headers }
-        );
-        const entryData = await entryRes.json();
-        if (!entryData || entryData.length === 0) { showError(); return; }
-        const entry = entryData[0];
+        setRevealSender(data.senderName);
 
-        const senderRes = await fetch(
-          SUPABASE_URL + '/rest/v1/profiles?id=eq.' + shared.from_user_id + '&select=display_name,email',
-          { headers }
-        );
-        const senderData = await senderRes.json();
-        const senderName = senderData?.[0]?.display_name ||
-          senderData?.[0]?.email?.split('@')[0] || 'Someone special';
+        const recipientLabel = data.recipientName
+          ? 'A memory from ' + data.senderName + ' \u2014 for ' + data.recipientName
+          : 'A memory from ' + data.senderName;
 
-        setRevealSender(senderName);
+        // Server-enforced lock: no body was sent, render the locked card.
+        if (data.locked) {
+          renderMemory(
+            { is_locked: true, unlock_date: data.unlock_date },
+            recipientLabel, null, {}
+          );
+          return;
+        }
 
-        const tokenRes = await fetch(
-          SUPABASE_URL + '/rest/v1/share_tokens?entry_id=eq.' + shared.entry_id + '&select=token&limit=1',
-          { headers }
-        );
-        const tokenData = await tokenRes.json();
+        // Unlocked: fetch media via the existing signed-media endpoint.
         let media = {};
-        if (tokenData && tokenData.length > 0) {
-          const mediaRes = await fetch('/api/get-signed-media?token=' + encodeURIComponent(tokenData[0].token));
+        if (data.mediaToken) {
+          const mediaRes = await fetch(
+            '/api/get-signed-media?token=' + encodeURIComponent(data.mediaToken)
+          );
           if (mediaRes.ok) media = await mediaRes.json();
         }
 
-        renderMemory(entry, 'A memory from ' + senderName, shared.message || null, media);
-      } catch(e) { showError(); }
+        const entry = {
+          title: data.title,
+          body: data.body,
+          created_at: data.created_at,
+          emotion: data.emotion,
+          is_locked: false,
+          unlock_date: null,
+          hasRecording: !!data.has_recording
+        };
+
+        renderMemory(entry, recipientLabel, data.sharedMessage || null, media);
+      } catch (e) { showError(); }
     }
 
     // ── RENDERING ──
 
     function renderMemory(entry, recipientLabel, sharedMessage, media) {
-      const date = new Date(entry.created_at).toLocaleDateString('en-US', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      });
+      const date = entry.created_at
+        ? new Date(entry.created_at).toLocaleDateString('en-US', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+          })
+        : '';
 
       const stillLocked = entry.is_locked && entry.unlock_date &&
         new Date() < new Date(entry.unlock_date);
@@ -670,7 +631,7 @@
       let heroHtml = '';
       if (media.photo_url) {
         heroHtml = '<img src="' + media.photo_url + '" class="card-photo" alt="Memory" />';
-      } else if (media.video_url && !entry.recording_url) {
+      } else if (media.video_url && !entry.hasRecording) {
         // Video is the primary media — promote to hero
         heroHtml = '<video class="video-hero" controls preload="metadata" playsinline src="' + media.video_url + '">Your browser does not support video.</video>';
       } else {
