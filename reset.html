@@ -262,7 +262,7 @@
   <script>
     const SUPABASE_URL = 'https://amijtfctukogekemryjq.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtaWp0ZmN0dWtvZ2VrZW1yeWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMzM3NzAsImV4cCI6MjA5MTcwOTc3MH0.IvyqU5Ep5aJz5HNhqcf30ofBL-7JoCl0DLU3zcqYHcc';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     function checkStrength(val) {
       const fill = document.getElementById('strength-fill');
@@ -324,16 +324,20 @@
       btn.innerHTML = '<span class="loading-spinner"></span>Updating password...';
 
       try {
-        // Get session from URL hash tokens
+        // detectSessionInUrl (default) already establishes the recovery session on load.
+        // Only fall back to setSession when there's no session AND we have BOTH tokens —
+        // an empty refresh_token makes setSession fail.
         const params = getHashParams();
-        if (params.access_token) {
-          await supabase.auth.setSession({
+        let { data: { session } } = await sb.auth.getSession();
+        if (!session && params.access_token && params.refresh_token) {
+          const { error: sErr } = await sb.auth.setSession({
             access_token: params.access_token,
-            refresh_token: params.refresh_token || '',
+            refresh_token: params.refresh_token,
           });
+          if (sErr) throw sErr;
         }
 
-        const { error } = await supabase.auth.updateUser({ password });
+        const { error } = await sb.auth.updateUser({ password });
         if (error) throw error;
         showSuccess();
       } catch (err) {
