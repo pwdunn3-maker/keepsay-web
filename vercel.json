@@ -22,7 +22,7 @@
     { "src": "/(.*)\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|otf|json|xml|txt)", "dest": "/$1.$2" },
     { "src": "/", "dest": "/index.html" },
     { "src": "/invite/(.*)", "dest": "/invite.html" },
-    { "src": "/(.*)", "dest": "/holding.html" }
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "crons": [
     {
