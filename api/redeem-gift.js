@@ -4,6 +4,9 @@
 // NEVER returns email, redeemed_by, or any payment identifier.
 
 const { createClient } = require('@supabase/supabase-js');
+const Stripe = require('stripe');
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Service-role client — bypasses RLS. Server-only; key never ships to the app.
 const admin = createClient(
@@ -45,12 +48,20 @@ module.exports = async function handler(req, res) {
     // Look up the gift (service role; no RLS).
     const { data: gift, error: readErr } = await admin
       .from('gift_codes')
-      .select('code, tier, gifter_name, redeemed_at')
+      .select('code, tier, gifter_name, redeemed_at, stripe_payment_intent_id')
       .eq('code', code)
       .single();
     if (readErr || !gift) return res.status(404).json({ error: 'Gift code not found' });
 
     if (gift.redeemed_at) return res.status(200).json({ already_redeemed: true });
+
+    // Defense-in-depth: confirm the gift was actually paid for before activating.
+    // (A gift_codes row is inserted at payment-intent creation, BEFORE payment
+    // confirms — so a code could exist without a successful charge.)
+    if (gift.stripe_payment_intent_id) {
+      const pi = await stripe.paymentIntents.retrieve(gift.stripe_payment_intent_id);
+      if (pi.status !== 'succeeded') return res.status(402).json({ error: 'Payment not completed' });
+    }
 
     // Conditional, race-safe redeem: only succeeds if still unredeemed.
     const { data: claimed, error: claimErr } = await admin

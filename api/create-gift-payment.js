@@ -7,11 +7,11 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+// Gifts are ANNUAL-ONLY (a gift is a full year, not a one-month trial). Monthly
+// tiers were removed so a low monthly price can't grant a full year on redemption.
 const PRICES = {
-  pro_monthly:    { amount: 499,  label: 'Keepsay Pro — 1 Month' },
-  pro_annual:     { amount: 3499, label: 'Keepsay Pro — 1 Year' },
-  legacy_monthly: { amount: 999,  label: 'Keepsay Legacy — 1 Month' },
-  legacy_annual:  { amount: 7999, label: 'Keepsay Legacy — 1 Year' },
+  pro_annual:    { amount: 3499, label: 'Keepsay Pro — 1 Year' },
+  legacy_annual: { amount: 7999, label: 'Keepsay Legacy — 1 Year' },
 };
 
 function generateCode() {

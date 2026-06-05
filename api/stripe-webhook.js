@@ -42,7 +42,7 @@ async function sendEmail({ to, subject, html }) {
 }
 
 async function sendGiftEmail({ recipientEmail, recipientName, gifterName, message, giftCode, tier, redeemUrl }) {
-  const tierLabel = tier === 'pro_annual' ? 'Keepsay Pro — Annual' : 'Keepsay Pro — Monthly';
+  const tierLabel = tier === 'legacy_annual' ? 'Keepsay Legacy — Annual' : 'Keepsay Pro — Annual';
 
   const html = `
 <!DOCTYPE html>
@@ -107,7 +107,7 @@ async function sendGiftEmail({ recipientEmail, recipientName, gifterName, messag
 }
 
 async function sendReceiptEmail({ gifterEmail, gifterName, recipientName, tier, amount }) {
-  const tierLabel = tier === 'pro_annual' ? 'Keepsay Pro — Annual' : 'Keepsay Pro — Monthly';
+  const tierLabel = tier === 'legacy_annual' ? 'Keepsay Legacy — Annual' : 'Keepsay Pro — Annual';
   const amountFormatted = '$' + (amount / 100).toFixed(2);
 
   const html = `

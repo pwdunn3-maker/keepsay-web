@@ -139,8 +139,8 @@
 
   <div id="main-content">
     <div class="hero">
-      <div class="hero-badge">🌸 Mother's Day Gift</div>
-      <h1 class="hero-title">Give mom a place to keep <em>her stories</em></h1>
+      <div class="hero-badge">Father's Day Gift</div>
+      <h1 class="hero-title">Give dad a place to keep <em>his stories</em></h1>
       <p class="hero-sub">Keepsay is where families preserve memories, share moments, and hear each other's voices — forever.</p>
       <p class="hero-proof">No app needed to give the gift. Recipient redeems with one tap.</p>
     </div>
@@ -157,26 +157,17 @@
             <div class="tier-badge pro">Keepsay Pro</div>
             <div class="tier-name">Pro</div>
             <div class="tier-desc">Unlimited memories, voice recordings, photos, Family Circles, and time-locked memories.</div>
-            <div class="tier-price" id="pro-price">$4.99 <span class="tier-price-sub">/ month</span></div>
+            <div class="tier-price" id="pro-price">$34.99 <span class="tier-price-sub">/ year</span></div>
           </div>
           <div class="tier-card" data-tier="legacy" onclick="selectTier('legacy')">
             <div class="tier-badge legacy">Keepsay Legacy</div>
             <div class="tier-name">Legacy</div>
             <div class="tier-desc">Video memories, AI writing assist, and everything in Pro. Your voice. Your face. Your stories.</div>
-            <div class="tier-price" id="legacy-price">$9.99 <span class="tier-price-sub">/ month</span></div>
+            <div class="tier-price" id="legacy-price">$79.99 <span class="tier-price-sub">/ year</span></div>
           </div>
         </div>
 
-        <!-- Duration toggle -->
-        <div class="duration-toggle">
-          <button class="duration-btn" onclick="selectDuration('monthly')">
-            Monthly
-          </button>
-          <button class="duration-btn active" onclick="selectDuration('annual')">
-            Annual
-            <span class="duration-save" id="duration-save-label">Save 42%</span>
-          </button>
-        </div>
+        <!-- Gifts are annual-only (a gift is a full year). No duration toggle. -->
       </div>
 
       <!-- STEP 2: What's included -->
@@ -201,11 +192,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Recipient's first name *</label>
-            <input type="text" id="recipient-name" placeholder="Mom" required />
+            <input type="text" id="recipient-name" placeholder="Dad" required />
           </div>
           <div class="form-group">
             <label>Recipient's email *</label>
-            <input type="email" id="recipient-email" placeholder="mom@email.com" required />
+            <input type="email" id="recipient-email" placeholder="dad@email.com" required />
           </div>
         </div>
         <div class="form-group">
@@ -214,7 +205,7 @@
         </div>
         <div class="form-group">
           <label>Add a personal message (optional)</label>
-          <textarea id="gift-message" placeholder="Mom, I got you this so you can finally write down all those stories I've been asking you to share for years. I love you. ❤️"></textarea>
+          <textarea id="gift-message" placeholder="Dad, I got you this so you can finally record all those stories I've been asking you to share for years. I love you."></textarea>
         </div>
       </div>
 
@@ -316,14 +307,8 @@
       const key = getCurrentKey();
       const price = PRICES[key];
 
-      document.getElementById('pro-price').innerHTML =
-        selectedDuration === 'annual'
-          ? '$34.99 <span class="tier-price-sub">/ year</span>'
-          : '$4.99 <span class="tier-price-sub">/ month</span>';
-      document.getElementById('legacy-price').innerHTML =
-        selectedDuration === 'annual'
-          ? '$79.99 <span class="tier-price-sub">/ year</span>'
-          : '$9.99 <span class="tier-price-sub">/ month</span>';
+      document.getElementById('pro-price').innerHTML = '$34.99 <span class="tier-price-sub">/ year</span>';
+      document.getElementById('legacy-price').innerHTML = '$79.99 <span class="tier-price-sub">/ year</span>';
 
       document.getElementById('summary-plan').textContent = price.label;
       document.getElementById('summary-price').textContent = price.display;
