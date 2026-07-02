@@ -13,10 +13,12 @@ const supabase = createClient(
 
 // Build a display name without ever returning the raw email to the client.
 function buildSenderName(profile) {
-  if (!profile) return 'Someone special';
-  if (profile.display_name) return profile.display_name;
-  if (profile.email) return profile.email.split('@')[0];
-  return 'Someone special';
+  // Real name when set; otherwise a warm generic — NEVER the raw email fragment
+  // (e.g. "pwdunn3+tour1"), which broke the emotional reveal on the shared-memory page.
+  if (profile && profile.display_name && profile.display_name.trim()) {
+    return profile.display_name.trim();
+  }
+  return 'Someone who loves you';
 }
 
 module.exports = async function handler(req, res) {
