@@ -42,9 +42,9 @@ body{
 :focus-visible{outline:3px solid var(--gold-bright);outline-offset:3px;border-radius:4px}
 img{max-width:100%;display:block}
 
-.brand{display:flex;align-items:center;gap:.55rem;font-family:"Playfair Display",serif;font-weight:600;font-size:1.3rem;color:var(--gold-pale);text-decoration:none;margin-bottom:34px}
-.brand-mark{width:34px;height:34px;border-radius:8px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.4);display:grid;place-items:center;color:var(--gold-bright);font-size:1.05rem;position:relative}
-.brand-mark::before{content:"\2665";position:absolute;top:-1px;font-size:.5rem;color:var(--gold-bright)}
+.brand{display:flex;align-items:center;gap:.6rem;font-family:"Playfair Display",serif;font-weight:600;font-size:1.3rem;color:var(--gold-pale);text-decoration:none;margin-bottom:34px}
+.brand-mark{width:38px;height:38px;border-radius:9px;background:var(--green-deep);border:1px solid rgba(212,175,55,.35);display:grid;place-items:center;padding:5px}
+.brand-mark img{width:100%;height:100%;object-fit:contain}
 
 /* real envelope asset — the moment they saw in the video */
 .envelope-img{width:210px;height:auto;margin:6px auto 30px;filter:drop-shadow(0 22px 40px rgba(0,0,0,.45))}
@@ -63,11 +63,12 @@ h1 em{font-style:italic;color:var(--gold-bright);font-weight:500}
 .rating{font-size:.9rem;color:var(--gold-pale);margin-bottom:2.6rem}
 .rating .stars{color:var(--gold-bright);letter-spacing:.12em}
 
-.how{display:grid;gap:16px;max-width:340px;width:100%;margin-bottom:2.6rem;text-align:left}
-.how div{display:flex;gap:14px;align-items:flex-start;background:rgba(250,246,237,.05);border:1px solid rgba(212,175,55,.22);border-radius:14px;padding:14px 16px}
-.how .n{font-family:"Playfair Display",serif;color:var(--gold-bright);font-size:1.4rem;line-height:1.15;flex:none}
-.how b{display:block;color:var(--paper);font-size:.98rem}
-.how span{font-size:.88rem;color:rgba(250,246,237,.68)}
+.how{display:grid;gap:12px;max-width:360px;width:100%;margin-bottom:2.6rem;text-align:left}
+.how .step{display:flex;gap:16px;align-items:center;background:var(--cream);border-radius:16px;padding:18px 20px;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.how .n{font-family:"Playfair Display",serif;color:var(--gold-bright);font-size:1.3rem;line-height:1;flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:var(--green-deep);box-shadow:inset 0 0 0 1px rgba(201,162,75,.4)}
+.how .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.how b{color:var(--ink);font-size:1.02rem;line-height:1.25}
+.how span{font-size:.9rem;color:var(--ink-soft);line-height:1.4}
 
 .fine{font-size:.85rem;color:rgba(250,246,237,.55)}
 .fine a{color:var(--gold-pale)}
@@ -76,7 +77,7 @@ h1 em{font-style:italic;color:var(--gold-bright);font-weight:500}
 </head>
 <body>
 
-<a class="brand" href="https://www.getkeepsay.com"><span class="brand-mark serif">K</span>Keepsay</a>
+<a class="brand" href="https://www.getkeepsay.com"><span class="brand-mark"><img src="/logo-kheart.png" alt=""></span>Keepsay</a>
 
 <img class="envelope-img" src="/envelope_seal.png" alt="A sealed Keepsay memory, waiting to be opened">
 
@@ -95,9 +96,9 @@ h1 em{font-style:italic;color:var(--gold-bright);font-weight:500}
 <p class="rating"><span class="stars">★★★★★</span> 5.0 on the App Store · Free 14-day trial · No card needed</p>
 
 <div class="how">
-  <div><span class="n">1</span><div><b>Download Keepsay</b><span>Free to start. Takes a minute.</span></div></div>
-  <div><span class="n">2</span><div><b>Record your voice</b><span>A story, a message, a moment — tap the mic and speak.</span></div></div>
-  <div><span class="n">3</span><div><b>They open it like a gift</b><span>A sealed envelope with your voice inside. No app needed on their end.</span></div></div>
+  <div class="step"><span class="n">1</span><div class="txt"><b>Download Keepsay</b><span>Free to start. Takes a minute.</span></div></div>
+  <div class="step"><span class="n">2</span><div class="txt"><b>Record your voice</b><span>A story, a message, a moment — tap the mic and speak.</span></div></div>
+  <div class="step"><span class="n">3</span><div class="txt"><b>They open it like a gift</b><span>A sealed envelope with your voice inside. No app needed on their end.</span></div></div>
 </div>
 
 <p class="fine">Your memories are yours forever. Export everything, anytime.<br>We never sell your data or show you ads.</p>
