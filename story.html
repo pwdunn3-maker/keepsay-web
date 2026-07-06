@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keepsay — Your voice, kept forever</title>
+<meta name="description" content="Record yourself reading their favorite story, telling them what they mean to you, or keeping a moment forever. Free to start — download Keepsay.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.getkeepsay.com/story">
+<meta property="og:title" content="Keepsay — Your voice, kept forever">
+<meta property="og:description" content="Record it once. They'll treasure it forever. Free 14-day trial, no card needed.">
+<meta property="og:image" content="https://www.getkeepsay.com/images/Feature_Graphic_Keepsay_Final.png">
+<link rel="icon" href="/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+  PURPOSE: single-job landing page for TikTok / creator traffic.
+  Routed at /story (see vercel.json). Point video captions and the
+  creator's link at getkeepsay.com/story?utm_source=tiktok&utm_campaign=xyz
+  (the page logs nothing; your analytics will see the params).
+  Hero uses the real envelope asset (/envelope_seal.png).
+============================================================ -->
+
+<style>
+:root{
+  --green-deep:#122E24;--green:#1B4332;
+  --gold:#C9A24B;--gold-bright:#D4AF37;--gold-pale:#F1E4C0;
+  --cream:#FAF6ED;--paper:#FFFDF8;--ink:#25332C;--ink-soft:#5C6B62;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:"Source Sans 3",-apple-system,sans-serif;
+  background:linear-gradient(175deg,var(--green) 0%,var(--green-deep) 65%);
+  color:var(--cream);min-height:100vh;line-height:1.6;font-size:17px;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;align-items:center;
+  padding:28px 22px 48px;text-align:center;
+}
+.serif{font-family:"Playfair Display",Georgia,serif}
+:focus-visible{outline:3px solid var(--gold-bright);outline-offset:3px;border-radius:4px}
+img{max-width:100%;display:block}
+
+.brand{display:flex;align-items:center;gap:.55rem;font-family:"Playfair Display",serif;font-weight:600;font-size:1.3rem;color:var(--gold-pale);text-decoration:none;margin-bottom:34px}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:rgba(212,175,55,.15);border:1px solid rgba(212,175,55,.4);display:grid;place-items:center;color:var(--gold-bright);font-size:1.05rem;position:relative}
+.brand-mark::before{content:"\2665";position:absolute;top:-1px;font-size:.5rem;color:var(--gold-bright)}
+
+/* real envelope asset — the moment they saw in the video */
+.envelope-img{width:210px;height:auto;margin:6px auto 30px;filter:drop-shadow(0 22px 40px rgba(0,0,0,.45))}
+
+.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-bright);margin-bottom:.8rem}
+h1{font-family:"Playfair Display",serif;font-weight:600;font-size:clamp(1.9rem,7vw,2.7rem);line-height:1.2;max-width:16ch;margin:0 auto .9rem;color:var(--paper)}
+h1 em{font-style:italic;color:var(--gold-bright);font-weight:500}
+.sub{color:rgba(250,246,237,.78);max-width:34ch;margin:0 auto 2rem;font-size:1.06rem}
+
+.badges{display:flex;flex-direction:column;gap:14px;align-items:center;margin-bottom:.9rem}
+.badges a{display:inline-block;border-radius:10px;transition:transform .15s ease}
+.badges a:hover{transform:translateY(-1px)}
+.badges img{height:56px;width:auto;display:block}
+.badges .play img{height:82px;margin:-13px}
+.badges .secondary{opacity:.55;transform:scale(.86)}
+.rating{font-size:.9rem;color:var(--gold-pale);margin-bottom:2.6rem}
+.rating .stars{color:var(--gold-bright);letter-spacing:.12em}
+
+.how{display:grid;gap:16px;max-width:340px;width:100%;margin-bottom:2.6rem;text-align:left}
+.how div{display:flex;gap:14px;align-items:flex-start;background:rgba(250,246,237,.05);border:1px solid rgba(212,175,55,.22);border-radius:14px;padding:14px 16px}
+.how .n{font-family:"Playfair Display",serif;color:var(--gold-bright);font-size:1.4rem;line-height:1.15;flex:none}
+.how b{display:block;color:var(--paper);font-size:.98rem}
+.how span{font-size:.88rem;color:rgba(250,246,237,.68)}
+
+.fine{font-size:.85rem;color:rgba(250,246,237,.55)}
+.fine a{color:var(--gold-pale)}
+.gift-link{margin-top:1.6rem}
+</style>
+</head>
+<body>
+
+<a class="brand" href="https://www.getkeepsay.com"><span class="brand-mark serif">K</span>Keepsay</a>
+
+<img class="envelope-img" src="/envelope_seal.png" alt="A sealed Keepsay memory, waiting to be opened">
+
+<p class="kicker">A story today. A memory forever.</p>
+<h1>Your voice, reading their favorite story — <em>kept forever</em></h1>
+<p class="sub">Record it once, in about sixty seconds. They can open it anywhere, anytime — even without the app.</p>
+
+<div class="badges" id="badges">
+  <a id="ios" href="https://apps.apple.com/app/id6774806816" aria-label="Download Keepsay on the App Store">
+    <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store">
+  </a>
+  <a id="android" class="play" href="https://play.google.com/store/apps/details?id=com.stubborngood.keepsay" aria-label="Get Keepsay on Google Play">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+  </a>
+</div>
+<p class="rating"><span class="stars">★★★★★</span> 5.0 on the App Store · Free 14-day trial · No card needed</p>
+
+<div class="how">
+  <div><span class="n">1</span><div><b>Download Keepsay</b><span>Free to start. Takes a minute.</span></div></div>
+  <div><span class="n">2</span><div><b>Record your voice</b><span>A story, a message, a moment — tap the mic and speak.</span></div></div>
+  <div><span class="n">3</span><div><b>They open it like a gift</b><span>A sealed envelope with your voice inside. No app needed on their end.</span></div></div>
+</div>
+
+<p class="fine">Your memories are yours forever. Export everything, anytime.<br>We never sell your data or show you ads.</p>
+<p class="fine gift-link">Want to give Keepsay to someone else? <a href="/gift">Gift a subscription &rarr;</a></p>
+
+<script>
+// Put the visitor's own store first; dim the other slightly.
+(function(){
+  var ua = navigator.userAgent || "";
+  var isAndroid = /android/i.test(ua);
+  var isiOS = /iphone|ipad|ipod/i.test(ua);
+  var badges = document.getElementById("badges");
+  var ios = document.getElementById("ios");
+  var android = document.getElementById("android");
+  if (isAndroid){ badges.insertBefore(android, ios); ios.classList.add("secondary"); }
+  else if (isiOS){ android.classList.add("secondary"); }
+})();
+</script>
+</body>
+</html>
