@@ -107,6 +107,11 @@ h1 em{font-style:italic;color:var(--gold-bright)}
 .demo-reset{margin-top:8px;background:none;border:1px solid var(--line);color:rgba(250,246,237,.7);
   font:inherit;font-size:.82rem;padding:7px 16px;border-radius:999px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s}
 .demo.open ~ .demo-reset{opacity:1;pointer-events:auto}
+.bridge{max-width:24ch;margin:26px auto 2px;text-align:center}
+.bridge .line{font-family:"Playfair Display",serif;font-weight:600;font-size:clamp(1.3rem,5.6vw,1.7rem);line-height:1.24;color:var(--paper);text-wrap:balance}
+.bridge .line em{font-style:italic;color:var(--gold-bright)}
+.bridge .sub{color:rgba(250,246,237,.84);font-size:1.02rem;margin-top:.55rem}
+.bridge .sub b{color:var(--gold-pale)}
 
 .badges{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:28px}
 .badges a{display:inline-block;border-radius:10px;transition:transform .15s ease}
@@ -211,6 +216,11 @@ footer a{color:var(--gold-pale)}
     </div>
     <p class="demo-cap"><b>Tap to open, then press play.</b> A real Keepsay memory — Oma&rsquo;s voice plays right here.</p>
     <button class="demo-reset" id="demoReset">↺ Start over</button>
+
+    <div class="bridge">
+      <p class="line">Now make one for <em>someone you love</em>.</p>
+      <p class="sub">Record your voice in about a minute — <b>free tonight, no card.</b></p>
+    </div>
 
     <div class="badges" id="badges">
       <a id="ios" href="https://apps.apple.com/app/id6774806816" aria-label="Download Keepsay on the App Store">
