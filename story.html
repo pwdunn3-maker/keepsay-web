@@ -61,14 +61,14 @@ h1 em{font-style:italic;color:var(--gold-bright)}
 .hero .sub{color:rgba(250,246,237,.8);max-width:38ch;margin:1rem auto 0;font-size:1.06rem}
 
 /* ---------- two-screen demo (a real sample; no phone chrome) ---------- */
-.demo{position:relative;width:330px;max-width:86vw;height:560px;margin:32px auto 0;
+.demo{position:relative;width:330px;max-width:86vw;margin:32px auto 0;display:grid;
   border-radius:24px;overflow:hidden;box-shadow:0 30px 64px rgba(0,0,0,.5);
   border:1px solid rgba(241,228,192,.14);text-align:center}
-.screen{position:absolute;inset:0;transition:opacity .7s ease}
+.screen{grid-area:1/1;transition:opacity .55s ease}
 
 /* screen 1: reveal */
 .s-reveal{background:var(--green-darkest);display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:34px 30px;cursor:pointer;font-family:"Inter",sans-serif;z-index:2}
+  min-height:470px;padding:34px 30px;cursor:pointer;font-family:"Inter",sans-serif;z-index:2}
 .s-reveal .env{width:150px;margin-bottom:26px;filter:drop-shadow(0 16px 30px rgba(0,0,0,.5));animation:floatIn 1s ease-out both}
 @keyframes floatIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .s-reveal .divider{width:36px;height:1.5px;background:var(--m-gold);margin-bottom:18px}
@@ -78,13 +78,13 @@ h1 em{font-style:italic;color:var(--gold-bright)}
 .s-reveal .hint{position:absolute;left:0;right:0;bottom:24px;font-size:.78rem;color:rgba(255,255,255,.45)}
 
 /* screen 2: the memory */
-.s-memory{background:var(--cream);opacity:0;pointer-events:none;overflow-y:auto;z-index:1;font-family:"Inter",sans-serif;text-align:left}
+.s-memory{background:var(--cream);opacity:0;pointer-events:none;z-index:1;font-family:"Inter",sans-serif;text-align:left}
 .demo.open .s-reveal{opacity:0;pointer-events:none}
 .demo.open .s-memory{opacity:1;pointer-events:auto}
 .m-nav{height:46px;background:var(--green);display:flex;align-items:center;gap:9px;padding:0 16px;position:sticky;top:0}
 .m-nav img{width:24px;height:24px;border-radius:6px}
 .m-nav b{font-size:.9rem;font-weight:600;color:#fff;letter-spacing:-.2px}
-.m-hero{width:100%;height:150px;object-fit:cover;display:block}
+.m-hero{width:100%;height:112px;object-fit:cover;display:block}
 .m-body{padding:20px 20px 22px}
 .m-from{font-size:.64rem;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px}
 .m-title{font-family:"Lora",Georgia,serif;font-size:1.32rem;font-weight:600;color:#1A1A1A;line-height:1.3;margin-bottom:5px}
@@ -97,7 +97,7 @@ h1 em{font-style:italic;color:var(--gold-bright)}
 .m-play svg{width:17px;height:17px;fill:#fff}
 .m-player .pr{flex:1;min-width:0}
 .m-bar{height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin-bottom:8px;overflow:hidden}
-.m-bar i{display:block;height:100%;width:34%;background:var(--m-gold);border-radius:2px}
+.m-bar i{display:block;height:100%;width:0;background:var(--m-gold);border-radius:2px;transition:width .1s linear}
 .m-time{font-size:.68rem;color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
 .m-time span{color:rgba(255,255,255,.9)}
 .m-variants{font-size:.72rem;color:var(--m-hint);margin-top:16px;line-height:1.5}
@@ -198,19 +198,18 @@ footer a{color:var(--gold-pale)}
           <div class="m-msg">&ldquo;I was thinking about reading a story to my grandson. I hope that hearing my voice and seeing the pictures together will stay with him, even when we&rsquo;re apart.&rdquo;</div>
           <div class="m-label">Voice memory</div>
           <div class="m-player">
-            <button class="m-play" id="demoPlay" aria-label="Play this memory">
+            <button class="m-play" id="demoPlay" aria-label="Play Oma&rsquo;s voice">
               <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </button>
             <div class="pr">
-              <div class="m-bar"><i></i></div>
-              <div class="m-time"><span>0:12</span> / 0:38</div>
+              <div class="m-bar"><i id="mFill"></i></div>
+              <div class="m-time"><span id="mCur">0:00</span> / <span id="mTot">0:38</span></div>
             </div>
           </div>
-          <p class="m-variants">A memory can be a note with a voice recording, a video, a photo — or just words. Always in their own voice.</p>
         </div>
       </div>
     </div>
-    <p class="demo-cap"><b>Tap to open, then press play.</b> This is a real Keepsay memory — the same one opens when you tap play.</p>
+    <p class="demo-cap"><b>Tap to open, then press play.</b> A real Keepsay memory — Oma&rsquo;s voice plays right here.</p>
     <button class="demo-reset" id="demoReset">↺ Start over</button>
 
     <div class="badges" id="badges">
@@ -313,13 +312,34 @@ var DEMO_MEMORY_URL = "https://www.getkeepsay.com/memory?id=9b15fc23-f543-41c7-9
   sReveal.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openMemory(); } });
   if(reset) reset.addEventListener("click", resetDemo);
 
-  // The demo play button + the keepsake "open it" link + the QR open the REAL memory.
+  // Inline audio player — the demo play button plays the memory's recording
+  // right here (no navigation, no second reveal). File lives in this repo.
+  var DEMO_AUDIO = "/demo-memory.m4a";
+  (function(){
+    var demoPlay = document.getElementById("demoPlay");
+    if(!demoPlay) return;
+    var svg = demoPlay.querySelector("svg");
+    var fill = document.getElementById("mFill"), cur = document.getElementById("mCur"), tot = document.getElementById("mTot");
+    var PLAY = '<path d="M8 5v14l11-7z"/>', PAUSE = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    var audio = null;
+    function icon(playing){ if(svg) svg.innerHTML = playing ? PAUSE : PLAY; }
+    function fmt(s){ if(isNaN(s) || !isFinite(s)) return "0:00"; var m = Math.floor(s/60), x = Math.floor(s%60); return m + ":" + (x<10?"0":"") + x; }
+    demoPlay.addEventListener("click", function(){
+      if(!audio){
+        audio = new Audio(DEMO_AUDIO);
+        audio.addEventListener("loadedmetadata", function(){ if(tot) tot.textContent = fmt(audio.duration); });
+        audio.addEventListener("timeupdate", function(){ var p = audio.duration ? (audio.currentTime/audio.duration*100) : 0; if(fill) fill.style.width = p + "%"; if(cur) cur.textContent = fmt(audio.currentTime); });
+        audio.addEventListener("ended", function(){ icon(false); });
+      }
+      if(audio.paused){ audio.play(); icon(true); } else { audio.pause(); icon(false); }
+    });
+  })();
+
+  // The keepsake "open it" link + the QR open the REAL reveal page.
   function goReal(e){
-    if(!isSet){ if(e) e.preventDefault(); if(cap) cap.innerHTML = "<b>Set the demo memory link in the code</b> to make this play a real memory."; return; }
+    if(!isSet){ if(e) e.preventDefault(); if(cap) cap.innerHTML = "<b>Set the demo memory link in the code</b> to make this open a real memory."; return; }
     window.open(DEMO_MEMORY_URL, "_blank", "noopener");
   }
-  var demoPlay = document.getElementById("demoPlay");
-  if(demoPlay) demoPlay.addEventListener("click", goReal);
   var openLink = document.getElementById("openLink");
   if(openLink){
     openLink.setAttribute("href", isSet ? DEMO_MEMORY_URL : "#");
