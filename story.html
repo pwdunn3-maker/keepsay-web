@@ -227,9 +227,9 @@ footer a{color:var(--gold-pale)}
 <!-- ===================== PHYSICAL KEEPSAKE ===================== -->
 <section class="keepsake">
   <div class="wrap">
-    <p class="eyebrow rise">The keepsake</p>
+    <p class="eyebrow rise">The Story Card</p>
     <h2 class="rise">A card they can hold — that plays your voice.</h2>
-    <p class="sub rise">Choose a design, add a note, and Keepsay makes a Story Card with a hidden code. They scan or tap it, and the screens above are exactly what opens — nothing to install.</p>
+    <p class="sub rise">Choose a design and a note, and Keepsay creates a Story Card with a QR code. They scan or tap it — the memory opens and plays, no app to install.</p>
 
     <figure class="card-photo rise">
       <img src="/PrintedStoryCard.jpeg" alt="A printed Keepsay Story Card: 'For David, from Grandma — Listen to me read your favorite story' with a QR code to scan or tap.">
@@ -237,12 +237,7 @@ footer a{color:var(--gold-pale)}
     </figure>
 
     <div class="scan-row rise">
-      <div class="qr-box">
-        <img id="qr" src="" alt="QR code that opens a sample Keepsay memory">
-        <span class="lbl">Scan from another phone</span>
-      </div>
-      <span class="scan-or">or</span>
-      <a class="play" id="openLink" href="#"><span class="tri"></span> Open it on this phone</a>
+      <a class="play" id="openLink" href="#"><span class="tri"></span> See the real memory page</a>
     </div>
   </div>
 </section>
@@ -256,7 +251,7 @@ footer a{color:var(--gold-pale)}
     </div>
     <div class="how">
       <div class="step rise"><span class="n">1</span><div class="txt"><b>Record your voice</b><span>A story, a message, a moment — open the app and speak.</span></div></div>
-      <div class="step rise"><span class="n">2</span><div class="txt"><b>We make the keepsake</b><span>Pick a design and a note. Keepsay creates a Story Card with a hidden code.</span></div></div>
+      <div class="step rise"><span class="n">2</span><div class="txt"><b>Add a QR Story Card</b><span>Pick a design and a note — Keepsay creates a Story Card with a QR code that opens your memory.</span></div></div>
       <div class="step rise"><span class="n">3</span><div class="txt"><b>They open it like a gift</b><span>Scan or tap — your voice plays on any phone. No app needed on their end.</span></div></div>
     </div>
   </div>
@@ -345,13 +340,6 @@ var DEMO_MEMORY_URL = "https://www.getkeepsay.com/memory?id=9b15fc23-f543-41c7-9
     openLink.setAttribute("href", isSet ? DEMO_MEMORY_URL : "#");
     if(isSet){ openLink.setAttribute("target","_blank"); openLink.setAttribute("rel","noopener"); }
     else openLink.addEventListener("click", goReal);
-  }
-  // QR always encodes the demo memory link — never a homepage fallback that
-  // would contradict the "the code opens the memory" label.
-  var qr = document.getElementById("qr");
-  if(qr){
-    qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&qzone=1"
-      + "&color=122E24&bgcolor=FAF6ED&data=" + encodeURIComponent(DEMO_MEMORY_URL);
   }
 
   // Put the visitor's own store first; dim the other.
