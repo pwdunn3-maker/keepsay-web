@@ -325,8 +325,13 @@ var DEMO_MEMORY_URL = "https://www.getkeepsay.com/memory?id=9b15fc23-f543-41c7-9
         audio.addEventListener("loadedmetadata", function(){ if(tot) tot.textContent = fmt(audio.duration); });
         audio.addEventListener("timeupdate", function(){ var p = audio.duration ? (audio.currentTime/audio.duration*100) : 0; if(fill) fill.style.width = p + "%"; if(cur) cur.textContent = fmt(audio.currentTime); });
         audio.addEventListener("ended", function(){ icon(false); });
+        audio.addEventListener("error", function(){ icon(false); window.open(DEMO_MEMORY_URL, "_blank", "noopener"); });
       }
-      if(audio.paused){ audio.play(); icon(true); } else { audio.pause(); icon(false); }
+      if(audio.paused){
+        icon(true);
+        var pp = audio.play();
+        if(pp && pp.catch){ pp.catch(function(){ icon(false); window.open(DEMO_MEMORY_URL, "_blank", "noopener"); }); }
+      } else { audio.pause(); icon(false); }
     });
   })();
 
