@@ -4,117 +4,351 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Keepsay — Your voice, kept forever</title>
-<meta name="description" content="Record yourself reading their favorite story, telling them what they mean to you, or keeping a moment forever. Free to start — download Keepsay.">
+<meta name="description" content="See exactly what they open: a sealed envelope with your voice inside. Record a memory in about a minute — they open it on any phone, no app needed.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.getkeepsay.com/story">
 <meta property="og:title" content="Keepsay — Your voice, kept forever">
-<meta property="og:description" content="Record it once. They'll treasure it forever. Free 14-day trial, no card needed.">
+<meta property="og:description" content="A sealed envelope with your voice inside. Record it once — they treasure it forever.">
 <meta property="og:image" content="https://www.getkeepsay.com/images/Feature_Graphic_Keepsay_Final.png">
 <link rel="icon" href="/icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Source+Sans+3:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
 <!-- ============================================================
-  PURPOSE: single-job landing page for TikTok / creator traffic.
-  Routed at /story (see vercel.json). Point video captions and the
-  creator's link at getkeepsay.com/story?utm_source=tiktok&utm_campaign=xyz
-  (the page logs nothing; your analytics will see the params).
-  Hero uses the real envelope asset (/envelope_seal.png).
+  /story — TikTok/creator landing page (routed at /story — see vercel.json).
+  Hero: a two-screen demo of what a recipient sees —
+   (1) the sealed reveal  →  tap  →  (2) the memory: a note + voice player —
+  styled to match the real reveal page (memory.html). The demo mirrors a real
+  memory; the play button, "Open it on this phone", and the QR all open it.
+
+  DEMO_MEMORY_URL (in the <script> below) is the memory the demo points at.
+  To swap the demo, replace it with another …/memory?id=… or ?token=… link.
 ============================================================ -->
 
 <style>
 :root{
-  --green-deep:#122E24;--green:#1B4332;
-  --gold:#C9A24B;--gold-bright:#D4AF37;--gold-pale:#F1E4C0;
-  --cream:#FAF6ED;--paper:#FFFDF8;--ink:#25332C;--ink-soft:#5C6B62;
+  --green:#1B4332; --green-deep:#122E24; --green-darkest:#0F2A1F;
+  --gold:#C9A24B; --gold-bright:#D4AF37; --gold-pale:#F1E4C0;
+  --cream:#FAF6ED; --paper:#FFFDF8; --ink:#25332C; --ink-soft:#5C6B62;
+  --line:rgba(241,228,192,.16);
+  --m-gold:#D4A853; --m-warm:#F5F3EE; --m-hint:#9A9A9A;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
-  font-family:"Source Sans 3",-apple-system,sans-serif;
-  background:linear-gradient(175deg,var(--green) 0%,var(--green-deep) 65%);
-  color:var(--cream);min-height:100vh;line-height:1.6;font-size:17px;
-  -webkit-font-smoothing:antialiased;
-  display:flex;flex-direction:column;align-items:center;
-  padding:28px 22px 48px;text-align:center;
+  font-family:"Source Sans 3",-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--green-deep); color:var(--cream); line-height:1.6; font-size:17px;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
 }
-.serif{font-family:"Playfair Display",Georgia,serif}
-:focus-visible{outline:3px solid var(--gold-bright);outline-offset:3px;border-radius:4px}
 img{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--gold-bright);outline-offset:3px;border-radius:6px}
+.wrap{max-width:680px;margin:0 auto;padding:0 22px}
+.eyebrow{font-size:.74rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-bright)}
 
-.brand{display:flex;align-items:center;gap:.6rem;font-family:"Playfair Display",serif;font-weight:600;font-size:1.3rem;color:var(--gold-pale);text-decoration:none;margin-bottom:34px}
-.brand-mark{width:38px;height:38px;border-radius:9px;background:var(--green-deep);border:1px solid rgba(212,175,55,.35);display:grid;place-items:center;padding:5px}
+.topbar{display:flex;justify-content:center;padding:26px 22px 6px}
+.brand{display:flex;align-items:center;gap:.55rem;text-decoration:none;color:var(--gold-pale)}
+.brand-mark{width:36px;height:36px;border-radius:9px;background:var(--green-darkest);border:1px solid rgba(212,175,55,.35);display:grid;place-items:center;padding:5px}
 .brand-mark img{width:100%;height:100%;object-fit:contain}
+.brand-name{font-family:"Playfair Display",serif;font-weight:600;font-size:1.28rem}
 
-/* real envelope asset — the moment they saw in the video */
-.envelope-img{width:210px;height:auto;margin:6px auto 30px;filter:drop-shadow(0 22px 40px rgba(0,0,0,.45))}
+section{padding:52px 0}
+.hero{padding:30px 0 44px;text-align:center;
+  background:radial-gradient(120% 80% at 50% 0%, var(--green) 0%, var(--green-deep) 58%, var(--green-darkest) 100%)}
+h1{font-family:"Playfair Display",serif;font-weight:600;font-size:clamp(2rem,7.4vw,2.9rem);line-height:1.16;letter-spacing:-.01em;color:var(--paper);max-width:15ch;margin:.7rem auto 0;text-wrap:balance}
+h1 em{font-style:italic;color:var(--gold-bright)}
+.hero .sub{color:rgba(250,246,237,.8);max-width:38ch;margin:1rem auto 0;font-size:1.06rem}
 
-.kicker{font-size:.78rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-bright);margin-bottom:.8rem}
-h1{font-family:"Playfair Display",serif;font-weight:600;font-size:clamp(1.9rem,7vw,2.7rem);line-height:1.2;max-width:16ch;margin:0 auto .9rem;color:var(--paper)}
-h1 em{font-style:italic;color:var(--gold-bright);font-weight:500}
-.sub{color:rgba(250,246,237,.78);max-width:34ch;margin:0 auto 2rem;font-size:1.06rem}
+/* ---------- two-screen demo (a real sample; no phone chrome) ---------- */
+.demo{position:relative;width:330px;max-width:86vw;height:560px;margin:32px auto 0;
+  border-radius:24px;overflow:hidden;box-shadow:0 30px 64px rgba(0,0,0,.5);
+  border:1px solid rgba(241,228,192,.14);text-align:center}
+.screen{position:absolute;inset:0;transition:opacity .7s ease}
 
-.badges{display:flex;flex-direction:column;gap:14px;align-items:center;margin-bottom:.9rem}
+/* screen 1: reveal */
+.s-reveal{background:var(--green-darkest);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:34px 30px;cursor:pointer;font-family:"Inter",sans-serif;z-index:2}
+.s-reveal .env{width:150px;margin-bottom:26px;filter:drop-shadow(0 16px 30px rgba(0,0,0,.5));animation:floatIn 1s ease-out both}
+@keyframes floatIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.s-reveal .divider{width:36px;height:1.5px;background:var(--m-gold);margin-bottom:18px}
+.s-reveal .snd{font-family:"Lora",Georgia,serif;font-size:1.3rem;color:#fff;line-height:1.4;margin-bottom:12px}
+.s-reveal .snd em{font-style:italic;color:var(--m-gold)}
+.s-reveal .tag{font-size:.9rem;color:rgba(255,255,255,.8);line-height:1.5;max-width:26ch}
+.s-reveal .hint{position:absolute;left:0;right:0;bottom:24px;font-size:.78rem;color:rgba(255,255,255,.45)}
+
+/* screen 2: the memory */
+.s-memory{background:var(--cream);opacity:0;pointer-events:none;overflow-y:auto;z-index:1;font-family:"Inter",sans-serif;text-align:left}
+.demo.open .s-reveal{opacity:0;pointer-events:none}
+.demo.open .s-memory{opacity:1;pointer-events:auto}
+.m-nav{height:46px;background:var(--green);display:flex;align-items:center;gap:9px;padding:0 16px;position:sticky;top:0}
+.m-nav img{width:24px;height:24px;border-radius:6px}
+.m-nav b{font-size:.9rem;font-weight:600;color:#fff;letter-spacing:-.2px}
+.m-hero{width:100%;height:150px;object-fit:cover;display:block}
+.m-body{padding:20px 20px 22px}
+.m-from{font-size:.64rem;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px}
+.m-title{font-family:"Lora",Georgia,serif;font-size:1.32rem;font-weight:600;color:#1A1A1A;line-height:1.3;margin-bottom:5px}
+.m-date{font-size:.76rem;color:var(--m-hint);margin-bottom:16px}
+.m-msg{font-size:.9rem;color:#5C5C5C;line-height:1.65;font-style:italic;padding:13px 15px;background:var(--m-warm);border-radius:10px;border-left:3px solid var(--m-gold);margin-bottom:18px}
+.m-label{font-size:.64rem;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px}
+.m-player{background:var(--green);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+.m-play{width:46px;height:46px;border-radius:50%;background:var(--m-gold);border:0;display:grid;place-items:center;flex:none;cursor:pointer;transition:transform .15s}
+.m-play:hover{transform:scale(1.06)}
+.m-play svg{width:17px;height:17px;fill:#fff}
+.m-player .pr{flex:1;min-width:0}
+.m-bar{height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin-bottom:8px;overflow:hidden}
+.m-bar i{display:block;height:100%;width:34%;background:var(--m-gold);border-radius:2px}
+.m-time{font-size:.68rem;color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
+.m-time span{color:rgba(255,255,255,.9)}
+.m-variants{font-size:.72rem;color:var(--m-hint);margin-top:16px;line-height:1.5}
+
+.demo-cap{margin-top:16px;font-size:.86rem;color:var(--gold-pale)}
+.demo-cap b{color:var(--paper)}
+.demo-reset{margin-top:8px;background:none;border:1px solid var(--line);color:rgba(250,246,237,.7);
+  font:inherit;font-size:.82rem;padding:7px 16px;border-radius:999px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .3s}
+.demo.open ~ .demo-reset{opacity:1;pointer-events:auto}
+
+.badges{display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:28px}
 .badges a{display:inline-block;border-radius:10px;transition:transform .15s ease}
 .badges a:hover{transform:translateY(-1px)}
-.badges img{height:56px;width:auto;display:block}
-.badges .play img{height:82px;margin:-13px}
-.badges .secondary{opacity:.55;transform:scale(.86)}
-.rating{font-size:.9rem;color:var(--gold-pale);margin-bottom:2.6rem}
-.rating .stars{color:var(--gold-bright);letter-spacing:.12em}
+.badges img{height:54px;width:auto}
+.badges .play-store img{height:80px;margin:-13px}
+.badges .secondary{opacity:.5;transform:scale(.85)}
+.rating{font-size:.9rem;color:var(--gold-pale);margin-top:16px}
+.rating .stars{color:var(--gold-bright);letter-spacing:.1em}
 
-.how{display:grid;gap:12px;max-width:360px;width:100%;margin-bottom:2.6rem;text-align:left}
-.how .step{display:flex;gap:16px;align-items:center;background:var(--cream);border-radius:16px;padding:18px 20px;box-shadow:0 10px 26px rgba(0,0,0,.22)}
-.how .n{font-family:"Playfair Display",serif;color:var(--gold-bright);font-size:1.3rem;line-height:1;flex:none;width:40px;height:40px;display:grid;place-items:center;border-radius:50%;background:var(--green-deep);box-shadow:inset 0 0 0 1px rgba(201,162,75,.4)}
-.how .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
-.how b{color:var(--ink);font-size:1.02rem;line-height:1.25}
-.how span{font-size:.9rem;color:var(--ink-soft);line-height:1.4}
+.keepsake{background:linear-gradient(180deg,var(--green-deep),var(--green-darkest));text-align:center}
+.keepsake h2,.steps h2,.cta h2{font-family:"Playfair Display",serif;font-weight:600;font-size:clamp(1.6rem,5.5vw,2.15rem);line-height:1.22;color:var(--paper);max-width:18ch;margin:.7rem auto 0;text-wrap:balance}
+.keepsake .sub{color:rgba(250,246,237,.74);max-width:38ch;margin:.9rem auto 0}
+.card-photo{margin:30px auto 0;max-width:420px;border-radius:16px;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.5);border:1px solid var(--line)}
+.card-caption{font-size:.86rem;background:var(--cream);color:var(--ink-soft);padding:12px 16px}
+.scan-row{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:30px}
+.qr-box{background:var(--cream);border-radius:14px;padding:14px;box-shadow:0 12px 26px rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;gap:8px}
+.qr-box img{width:128px;height:128px;border-radius:6px;background:#fff}
+.qr-box .lbl{font-size:.72rem;font-weight:600;letter-spacing:.04em;color:var(--ink-soft);text-transform:uppercase}
+.scan-or{color:var(--gold-pale);font-style:italic;font-family:"Playfair Display",serif;font-size:1.05rem}
+.play{display:inline-flex;align-items:center;gap:9px;background:var(--green-darkest);color:var(--gold-pale);text-decoration:none;font-weight:600;font-size:.96rem;padding:11px 20px 11px 16px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.28);transition:transform .15s ease}
+.play:hover{transform:translateY(-1px)}
+.play .tri{width:0;height:0;border-style:solid;border-width:7px 0 7px 12px;border-color:transparent transparent transparent var(--gold-bright)}
 
-.fine{font-size:.85rem;color:rgba(250,246,237,.55)}
-.fine a{color:var(--gold-pale)}
-.gift-link{margin-top:1.6rem}
+.steps h2{text-align:center}
+.steps .head{text-align:center;margin-bottom:30px}
+.how{display:grid;gap:12px;max-width:440px;margin:0 auto}
+.step{display:flex;gap:16px;align-items:center;background:var(--cream);border-radius:16px;padding:18px 20px;box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.step .n{font-family:"Playfair Display",serif;color:var(--green);font-size:1.55rem;line-height:1;flex:none;width:24px;text-align:center}
+.step .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.step b{color:var(--ink);font-size:1.04rem;line-height:1.25}
+.step span{font-size:.9rem;color:var(--ink-soft);line-height:1.4}
+
+.quote{text-align:center}
+.quote .mark{width:44px;height:1px;background:var(--gold);margin:0 auto 22px}
+.quote p{font-family:"Playfair Display",serif;font-style:italic;font-size:clamp(1.35rem,5vw,1.8rem);line-height:1.4;color:var(--paper);max-width:22ch;margin:0 auto;text-wrap:balance}
+.quote .attrib{font-family:"Source Sans 3",sans-serif;font-style:normal;font-size:.92rem;color:rgba(250,246,237,.62);margin-top:20px;max-width:34ch;margin-left:auto;margin-right:auto}
+
+.cta{text-align:center;background:radial-gradient(120% 90% at 50% 100%,var(--green) 0%,var(--green-deep) 60%)}
+.cta .sub{color:rgba(250,246,237,.78);margin:.9rem auto 0;max-width:32ch}
+.gift-link{margin-top:22px;font-size:.92rem}
+.gift-link a{color:var(--gold-pale);border-bottom:1px solid var(--line);text-decoration:none;padding-bottom:2px}
+
+footer{padding:34px 22px 46px;text-align:center;font-size:.82rem;color:rgba(250,246,237,.5);border-top:1px solid var(--line)}
+footer a{color:var(--gold-pale)}
+
+.rise{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.rise.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .rise{opacity:1;transform:none;transition:none}
+  .screen,.s-reveal .env{transition:none;animation:none}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
 
-<a class="brand" href="https://www.getkeepsay.com"><span class="brand-mark"><img src="/logo-kheart.png" alt=""></span>Keepsay</a>
-
-<img class="envelope-img" src="/envelope_seal.png" alt="A sealed Keepsay memory, waiting to be opened">
-
-<p class="kicker">A story today. A memory forever.</p>
-<h1>Your voice, reading their favorite story — <em>kept forever</em></h1>
-<p class="sub">Record it once, in about sixty seconds. They can open it anywhere, anytime — even without the app.</p>
-
-<div class="badges" id="badges">
-  <a id="ios" href="https://apps.apple.com/app/id6774806816" aria-label="Download Keepsay on the App Store">
-    <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store">
-  </a>
-  <a id="android" class="play" href="https://play.google.com/store/apps/details?id=com.stubborngood.keepsay" aria-label="Get Keepsay on Google Play">
-    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+<div class="topbar">
+  <a class="brand" href="https://www.getkeepsay.com" aria-label="Keepsay home">
+    <span class="brand-mark"><img src="/logo-kheart.png" alt=""></span>
+    <span class="brand-name">Keepsay</span>
   </a>
 </div>
-<p class="rating"><span class="stars">★★★★★</span> 5.0 on the App Store · Free 14-day trial · No card needed</p>
 
-<div class="how">
-  <div class="step"><span class="n">1</span><div class="txt"><b>Download Keepsay</b><span>Free to start. Takes a minute.</span></div></div>
-  <div class="step"><span class="n">2</span><div class="txt"><b>Record your voice</b><span>A story, a message, a moment — tap the mic and speak.</span></div></div>
-  <div class="step"><span class="n">3</span><div class="txt"><b>They open it like a gift</b><span>A sealed envelope with your voice inside. No app needed on their end.</span></div></div>
-</div>
+<!-- ===================== HERO: the two screens ===================== -->
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">This is what they open</p>
+    <h1>A sealed envelope. <em>Your voice</em> inside.</h1>
+    <p class="sub">Exactly what the person you love sees. Tap the envelope.</p>
 
-<p class="fine">Your memories are yours forever. Export everything, anytime.<br>We never sell your data or show you ads.</p>
-<p class="fine gift-link">Want to give Keepsay to someone else? <a href="/gift">Gift a subscription &rarr;</a></p>
+    <div class="demo" id="demo">
+      <!-- SCREEN 1 — reveal -->
+      <div class="screen s-reveal" id="sReveal" role="button" tabindex="0" aria-label="Open the envelope">
+        <img class="env" src="/envelope_seal.png" alt="A sealed memory">
+        <div class="divider"></div>
+        <div class="snd">Oma kept something <em>for you</em></div>
+        <div class="tag">Some moments are meant to be felt, not just remembered.</div>
+        <div class="hint">Tap to open ↑</div>
+      </div>
+      <!-- SCREEN 2 — the memory -->
+      <div class="screen s-memory" id="sMemory">
+        <div class="m-nav"><img src="/icon.png" alt=""><b>Keepsay</b></div>
+        <img class="m-hero" src="/memory_placeholder.jpg" alt="">
+        <div class="m-body">
+          <div class="m-from">A memory from Oma</div>
+          <div class="m-title">Pictures and Grandma&rsquo;s Voice</div>
+          <div class="m-date">Thursday, June 25, 2026</div>
+          <div class="m-msg">&ldquo;I was thinking about reading a story to my grandson. I hope that hearing my voice and seeing the pictures together will stay with him, even when we&rsquo;re apart.&rdquo;</div>
+          <div class="m-label">Voice memory</div>
+          <div class="m-player">
+            <button class="m-play" id="demoPlay" aria-label="Play this memory">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div class="pr">
+              <div class="m-bar"><i></i></div>
+              <div class="m-time"><span>0:12</span> / 0:38</div>
+            </div>
+          </div>
+          <p class="m-variants">A memory can be a note with a voice recording, a video, a photo — or just words. Always in their own voice.</p>
+        </div>
+      </div>
+    </div>
+    <p class="demo-cap"><b>Tap to open, then press play.</b> This is a real Keepsay memory — the same one opens when you tap play.</p>
+    <button class="demo-reset" id="demoReset">↺ Start over</button>
+
+    <div class="badges" id="badges">
+      <a id="ios" href="https://apps.apple.com/app/id6774806816" aria-label="Download Keepsay on the App Store">
+        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store">
+      </a>
+      <a id="android" class="play-store" href="https://play.google.com/store/apps/details?id=com.stubborngood.keepsay" aria-label="Get Keepsay on Google Play">
+        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+      </a>
+    </div>
+    <p class="rating"><span class="stars">★★★★★</span> 5.0 on the App Store · Free 14-day trial · No card needed</p>
+  </div>
+</header>
+
+<!-- ===================== PHYSICAL KEEPSAKE ===================== -->
+<section class="keepsake">
+  <div class="wrap">
+    <p class="eyebrow rise">The keepsake</p>
+    <h2 class="rise">A card they can hold — that plays your voice.</h2>
+    <p class="sub rise">Choose a design, add a note, and Keepsay makes a Story Card with a hidden code. They scan or tap it, and the screens above are exactly what opens — nothing to install.</p>
+
+    <figure class="card-photo rise">
+      <img src="/PrintedStoryCard.jpeg" alt="A printed Keepsay Story Card: 'For David, from Grandma — Listen to me read your favorite story' with a QR code to scan or tap.">
+      <figcaption class="card-caption">A real Keepsay Story Card. The code opens the memory.</figcaption>
+    </figure>
+
+    <div class="scan-row rise">
+      <div class="qr-box">
+        <img id="qr" src="" alt="QR code that opens a sample Keepsay memory">
+        <span class="lbl">Scan from another phone</span>
+      </div>
+      <span class="scan-or">or</span>
+      <a class="play" id="openLink" href="#"><span class="tri"></span> Open it on this phone</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HOW IT WORKS ===================== -->
+<section class="steps">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow rise">How it works</p>
+      <h2 class="rise">Three steps, about a minute.</h2>
+    </div>
+    <div class="how">
+      <div class="step rise"><span class="n">1</span><div class="txt"><b>Record your voice</b><span>A story, a message, a moment — open the app and speak.</span></div></div>
+      <div class="step rise"><span class="n">2</span><div class="txt"><b>We make the keepsake</b><span>Pick a design and a note. Keepsay creates a Story Card with a hidden code.</span></div></div>
+      <div class="step rise"><span class="n">3</span><div class="txt"><b>They open it like a gift</b><span>Scan or tap — your voice plays on any phone. No app needed on their end.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== REFLECTION ===================== -->
+<section class="quote">
+  <div class="wrap">
+    <div class="mark rise"></div>
+    <p class="rise">Some moments are meant to be felt, not just remembered.</p>
+    <p class="attrib rise">Your real voice — the breath, the pause, the way you say their name. Kept, and replayed forever.</p>
+  </div>
+</section>
+
+<!-- ===================== FINAL CTA ===================== -->
+<section class="cta">
+  <div class="wrap">
+    <p class="eyebrow rise">Start today</p>
+    <h2 class="rise">Record one memory. Keep it forever.</h2>
+    <p class="sub rise">Free for 14 days. No card needed.</p>
+    <div class="badges rise" id="badges2">
+      <a href="https://apps.apple.com/app/id6774806816" aria-label="Download Keepsay on the App Store">
+        <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store">
+      </a>
+      <a class="play-store" href="https://play.google.com/store/apps/details?id=com.stubborngood.keepsay" aria-label="Get Keepsay on Google Play">
+        <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+      </a>
+    </div>
+    <p class="gift-link rise">Giving Keepsay to someone else? <a href="/gift">Gift a subscription →</a></p>
+  </div>
+</section>
+
+<footer>
+  Your memories are yours forever. Export everything, anytime.<br>
+  We never sell your data or show you ads. &nbsp;·&nbsp; <a href="https://www.getkeepsay.com">getkeepsay.com</a>
+</footer>
 
 <script>
-// Put the visitor's own store first; dim the other slightly.
+/* The memory the demo points at (play button, "Open it on this phone", QR).
+   Swap by pasting another …/memory?id=… or ?token=… link. */
+var DEMO_MEMORY_URL = "https://www.getkeepsay.com/memory?id=9b15fc23-f543-41c7-9b48-fce0880d850d";
+
 (function(){
+  var isSet = DEMO_MEMORY_URL.indexOf("REPLACE_ME") === -1;
+  var demo = document.getElementById("demo");
+  var sReveal = document.getElementById("sReveal");
+  var reset = document.getElementById("demoReset");
+  var cap = document.getElementById("demoCap");
+
+  function openMemory(){ demo.classList.add("open"); }
+  function resetDemo(){ demo.classList.remove("open"); }
+  sReveal.addEventListener("click", openMemory);
+  sReveal.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); openMemory(); } });
+  if(reset) reset.addEventListener("click", resetDemo);
+
+  // The demo play button + the keepsake "open it" link + the QR open the REAL memory.
+  function goReal(e){
+    if(!isSet){ if(e) e.preventDefault(); if(cap) cap.innerHTML = "<b>Set the demo memory link in the code</b> to make this play a real memory."; return; }
+    window.open(DEMO_MEMORY_URL, "_blank", "noopener");
+  }
+  var demoPlay = document.getElementById("demoPlay");
+  if(demoPlay) demoPlay.addEventListener("click", goReal);
+  var openLink = document.getElementById("openLink");
+  if(openLink){
+    openLink.setAttribute("href", isSet ? DEMO_MEMORY_URL : "#");
+    if(isSet){ openLink.setAttribute("target","_blank"); openLink.setAttribute("rel","noopener"); }
+    else openLink.addEventListener("click", goReal);
+  }
+  // QR always encodes the demo memory link — never a homepage fallback that
+  // would contradict the "the code opens the memory" label.
+  var qr = document.getElementById("qr");
+  if(qr){
+    qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&qzone=1"
+      + "&color=122E24&bgcolor=FAF6ED&data=" + encodeURIComponent(DEMO_MEMORY_URL);
+  }
+
+  // Put the visitor's own store first; dim the other.
   var ua = navigator.userAgent || "";
-  var isAndroid = /android/i.test(ua);
-  var isiOS = /iphone|ipad|ipod/i.test(ua);
+  var isAndroid = /android/i.test(ua), isiOS = /iphone|ipad|ipod/i.test(ua);
   var badges = document.getElementById("badges");
-  var ios = document.getElementById("ios");
-  var android = document.getElementById("android");
-  if (isAndroid){ badges.insertBefore(android, ios); ios.classList.add("secondary"); }
-  else if (isiOS){ android.classList.add("secondary"); }
+  var ios = document.getElementById("ios"), android = document.getElementById("android");
+  if(badges && ios && android){
+    if(isAndroid){ badges.insertBefore(android, ios); ios.classList.add("secondary"); }
+    else if(isiOS){ android.classList.add("secondary"); }
+  }
+
+  // Scroll reveal.
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add("in"); io.unobserve(en.target); } });
+  }, {threshold:.16});
+  document.querySelectorAll(".rise").forEach(function(el){ io.observe(el); });
 })();
 </script>
 </body>
