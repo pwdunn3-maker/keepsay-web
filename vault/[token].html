@@ -25,7 +25,7 @@
   a Galaxy Tab S8 (Android 13). This page uses the SAME structure the
   prototype validated: TWO fully independent recorder instances (voice,
   video), each with its own DOM subtree, its own button/timer/status
-  elements, its own closure-scoped stream/recorder/isRecording state —
+  elements, its own closure-scoped stream/recorder/phase state —
   never shared between modes. An earlier version of this file
   consolidated both into one unified element toggled by a CSS mode class;
   that novel, never-device-tested structure broke voice recording
@@ -186,11 +186,20 @@
     margin-bottom: 14px;
     overflow: hidden;
   }
-  .video-stage.recording {
+  /* .live = the stage is showing a real camera feed (preview OR actively
+     recording — both look identical in size). .recording layers ONLY a
+     border-color change on top, once MediaRecorder actually starts —
+     never a size/aspect/background change. This is what guarantees no
+     layout shift between "tap Record video" (preview) and "tap Start
+     Recording" (recording): the box already grew to its final size the
+     moment the preview attached. */
+  .video-stage.live {
     background: #000;
-    border-color: var(--bad);
     aspect-ratio: 3 / 4;
     max-height: 48vh;
+  }
+  .video-stage.recording {
+    border-color: var(--bad);
   }
   .live-preview {
     position: absolute;
@@ -201,7 +210,7 @@
     display: block;
     opacity: 0;
   }
-  .video-stage.recording .live-preview { opacity: 1; }
+  .video-stage.live .live-preview { opacity: 1; }
   .stage-controls {
     position: absolute;
     left: 0;
@@ -382,7 +391,7 @@
       <div class="video-stage" id="videoStage">
         <video id="videoLivePreview" class="live-preview" autoplay muted playsinline></video>
         <div class="stage-controls">
-          <button type="button" class="rec-btn" id="videoRecBtn">Start recording</button>
+          <button type="button" class="rec-btn" id="videoRecBtn">Record video</button>
           <span class="timer hidden" id="videoTimer">0:00</span>
         </div>
       </div>
@@ -592,22 +601,58 @@
 
   // ============================================================
   // Recorder factory — ported DIRECTLY from mediarecorder-test.html's
-  // setupRecorder(). Adapted only in two ways: (1) finishRecording() hands
-  // the blob off to this page's review/submit flow via config.onFinish
-  // instead of a local <audio>/<video> playback element (the prototype was
-  // a side-by-side diagnostic with no submission step); (2) an optional
-  // "choose a different way to record" back-link (config.changeModeBtnId/
-  // areaId) — a REAL-PAGE-ONLY addition, not in the prototype, needed
-  // because this page must commit to ONE mode to submit, unlike the
-  // prototype which just showed both permanently. Everything else —
-  // element lookups, the facing-toggle wiring, the start/stop/tick timer
-  // logic, the mimeType fallback chain, the visibilitychange/pagehide
-  // cleanup — matches the prototype line-for-line. Each call below is a
-  // fully independent instance: its own stream/recorder/chunks/
-  // isRecording/chosenMimeType, own DOM elements, nothing shared with the
-  // other instance. Returns { resetUI } so recordAgainBtn (shared, since
-  // it lives in the one review card both modes flow through) can restore
-  // whichever instance's button/timer to a ready state.
+  // setupRecorder(), still ONE shared factory for both instances (kept
+  // shared rather than duplicated — see the note at the bottom of this
+  // function about why). Adapted in three ways beyond the original
+  // adaptations (onFinish hand-off to review, the changeMode back-link):
+  //
+  //   (1) VIDEO gets a two-phase state machine — 'idle' → 'previewing'
+  //       (tap "Record video": getUserMedia only, live preview shown at
+  //       FULL final size immediately, no MediaRecorder yet) →
+  //       'recording' (tap "Start Recording": MediaRecorder starts on the
+  //       ALREADY-LIVE stream — no second getUserMedia call, no second
+  //       permission prompt, no resize/flash). This is gated entirely on
+  //       config.livePreviewId being present, so it only ever activates
+  //       for the video config below — VOICE's config has no
+  //       livePreviewId, so voice takes the original single-tap
+  //       idle→recording path (startRecording), completely unchanged in
+  //       behavior from before this addition.
+  //   (2) Front/back toggle, while previewing, now actively stops the old
+  //       stream and re-acquires with the new facingMode (switchFacing) —
+  //       previously (and still, for voice, which has no facing toggle at
+  //       all) it only remembered a preference for the next getUserMedia
+  //       call.
+  //   (3) A `cancelled` flag on the video-only changeMode abandon path,
+  //       so backing out via "choose a different way to record" WHILE
+  //       actively recording doesn't let the async recorder 'stop' event
+  //       flow into onFinish/showReview afterward. Deliberately scoped to
+  //       config.livePreviewId (video only) — voice's changeMode-while-
+  //       recording path is left EXACTLY as it was, unchanged, per
+  //       instruction. (Note: voice has the same latent quirk this fixes
+  //       for video — pre-existing before this change, not introduced by
+  //       it, and intentionally not touched here; worth a look
+  //       separately if it matters.)
+  //
+  // Sizing: the video-stage's FULL size (aspect-ratio/max-height/black
+  // background) is driven by the .live CSS class, added the instant the
+  // preview stream attaches (phase 'previewing') — .recording (added only
+  // once MediaRecorder actually starts) layers ONLY a border-color change
+  // on top. So there is no layout shift between preview and recording —
+  // the box is already at its final size before "Start Recording" is ever
+  // tapped, which is also what fixes the reported "opens low, have to
+  // scroll, can't see anything until recording" jank (the box now reaches
+  // full size, with a live feed already showing, on the FIRST tap).
+  //
+  // Why one shared factory instead of two separate voice/video functions:
+  // duplicating ~150 lines of shared mimeType/timer/teardown/error-
+  // handling logic between two near-identical copies is itself a real
+  // maintainability/drift risk (the exact class of bug this codebase's
+  // MAINTENANCE.md already flags twice — ST54/ST55 — for duplicated
+  // logic silently diverging). Every voice-facing code path below
+  // (startRecording, stopRecording, finishRecording's non-cancelled
+  // branch, the click handler's idle/recording branches) was verified to
+  // produce IDENTICAL behavior to before this change; voice's own
+  // markup/CSS/config object is untouched.
   // ============================================================
   function setupRecorder(config) {
     var btn = document.getElementById(config.btnId);
@@ -619,29 +664,16 @@
     var facingBackBtn = config.facingBackId ? document.getElementById(config.facingBackId) : null;
     var currentFacing = 'user';
 
-    if (facingFrontBtn && facingBackBtn) {
-      facingFrontBtn.addEventListener('click', function () {
-        if (isRecording) return;
-        currentFacing = 'user';
-        facingFrontBtn.classList.add('active');
-        facingBackBtn.classList.remove('active');
-      });
-      facingBackBtn.addEventListener('click', function () {
-        if (isRecording) return;
-        currentFacing = 'environment';
-        facingBackBtn.classList.add('active');
-        facingFrontBtn.classList.remove('active');
-      });
-    }
-
     var stream = null;
     var recorder = null;
     var chunks = [];
     var startedAt = 0;
     var intervalId = null;
-    var isRecording = false;
+    // 'idle' | 'previewing' (video only) | 'recording'
+    var phase = 'idle';
     var chosenMimeType = '';
     var currentObjectUrl = null;
+    var cancelled = false; // set true only on the video-only abandon-while-recording path (see note above)
 
     if (!canRecord) {
       btn.disabled = true;
@@ -654,6 +686,38 @@
       statusEl.classList.toggle('error', !!isError);
     }
 
+    function switchFacing(newFacing, activeBtn, inactiveBtn) {
+      if (phase === 'recording') return; // toggle is disabled while actively recording; guarded here too
+      currentFacing = newFacing;
+      activeBtn.classList.add('active');
+      inactiveBtn.classList.remove('active');
+      if (phase !== 'previewing') return; // idle: just remembered for the next startPreview()
+
+      // Previewing: switching camera must show the NEW camera live, not
+      // just change a preference for later — stop the old stream, get a
+      // fresh one with the new facingMode, reattach.
+      if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+      if (livePreviewEl) livePreviewEl.srcObject = null;
+      setStatus('Switching camera…');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: true }).then(function (s) {
+        stream = s;
+        if (livePreviewEl) livePreviewEl.srcObject = stream;
+        setStatus('');
+      }).catch(function (err) {
+        // Re-acquire failed — don't leave a dead full-size box with no
+        // stream; fall back to idle so the user can just tap again.
+        if (stageEl) stageEl.classList.remove('live');
+        phase = 'idle';
+        btn.textContent = 'Record video';
+        setStatus(friendlyGetUserMediaError(err, true), true);
+      });
+    }
+
+    if (facingFrontBtn && facingBackBtn) {
+      facingFrontBtn.addEventListener('click', function () { switchFacing('user', facingFrontBtn, facingBackBtn); });
+      facingBackBtn.addEventListener('click', function () { switchFacing('environment', facingBackBtn, facingFrontBtn); });
+    }
+
     function tick() {
       var elapsed = (Date.now() - startedAt) / 1000;
       timerEl.textContent = fmtTime(elapsed);
@@ -664,79 +728,137 @@
       }
     }
 
+    // ---- Teardown: releases whatever's live (stream + recorder if any),
+    // resets the stage/button/timer/facing-toggle to idle. Used by every
+    // stop path (normal stop, auto-cap, preview-only stop, abandon,
+    // backgrounded tab, entering review) — idempotent/safe to call even
+    // when nothing is live. -----------------------------------------------
+    function teardownStream(reason) {
+      clearInterval(intervalId);
+      intervalId = null;
+      if (recorder && recorder.state !== 'inactive') {
+        try { recorder.stop(); } catch (e) { /* already stopping/stopped */ }
+      }
+      if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+      if (livePreviewEl) livePreviewEl.srcObject = null;
+      if (stageEl) { stageEl.classList.remove('live'); stageEl.classList.remove('recording'); }
+      btn.textContent = config.livePreviewId ? 'Record video' : 'Start recording';
+      btn.classList.remove('recording');
+      timerEl.classList.add('hidden');
+      timerEl.textContent = '0:00';
+      if (facingFrontBtn) facingFrontBtn.disabled = false;
+      if (facingBackBtn) facingBackBtn.disabled = false;
+      phase = 'idle';
+      if (reason !== null && reason !== undefined) setStatus(reason);
+    }
+
+    // ---- Voice-only path (no livePreviewId): acquire + start
+    // MediaRecorder in one step, exactly as before this change. ----------
     function startRecording() {
       chunks = [];
       setStatus('Requesting permission…');
 
-      var activeConstraints = config.constraints;
-      if (facingFrontBtn && facingBackBtn) {
-        activeConstraints = { video: { facingMode: currentFacing }, audio: true };
-      }
-
-      navigator.mediaDevices.getUserMedia(activeConstraints).then(function (s) {
+      navigator.mediaDevices.getUserMedia(config.constraints).then(function (s) {
         stream = s;
-        if (livePreviewEl) livePreviewEl.srcObject = stream;
-        if (stageEl) stageEl.classList.add('recording');
         chosenMimeType = pickMimeType(config.mimeCandidates);
-
         var options = chosenMimeType ? { mimeType: chosenMimeType } : {};
         try {
           recorder = new MediaRecorder(stream, options);
         } catch (e) {
           setStatus('Recording isn’t supported on this device.', true);
           stream.getTracks().forEach(function (t) { t.stop(); });
-          if (livePreviewEl) livePreviewEl.srcObject = null;
-          if (stageEl) stageEl.classList.remove('recording');
+          stream = null;
           return;
         }
 
         recorder.addEventListener('dataavailable', function (e) {
           if (e.data && e.data.size > 0) chunks.push(e.data);
         });
-
-        recorder.addEventListener('stop', function () {
-          finishRecording();
-        });
-
+        recorder.addEventListener('stop', function () { finishRecording(); });
         recorder.addEventListener('error', function (e) {
           setStatus('Recording error: ' + (e.error ? e.error.message : 'unknown'), true);
         });
 
         recorder.start();
-        isRecording = true;
+        phase = 'recording';
         startedAt = Date.now();
         btn.textContent = 'Stop recording';
         btn.classList.add('recording');
-        if (facingFrontBtn) facingFrontBtn.disabled = true;
-        if (facingBackBtn) facingBackBtn.disabled = true;
         timerEl.classList.remove('hidden');
         timerEl.textContent = '0:00';
         setStatus('Recording…');
         intervalId = setInterval(tick, 250);
       }).catch(function (err) {
-        setStatus(friendlyGetUserMediaError(err, !!config.livePreviewId), true);
+        setStatus(friendlyGetUserMediaError(err, false), true);
       });
     }
 
+    // ---- Video-only, tap 1: acquire + show live preview, NO
+    // MediaRecorder yet. idle → previewing. -------------------------------
+    function startPreview() {
+      setStatus('Requesting permission…');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: true }).then(function (s) {
+        stream = s;
+        if (livePreviewEl) livePreviewEl.srcObject = stream;
+        if (stageEl) stageEl.classList.add('live');
+        phase = 'previewing';
+        btn.textContent = 'Start Recording';
+        setStatus('');
+      }).catch(function (err) {
+        setStatus(friendlyGetUserMediaError(err, true), true);
+      });
+    }
+
+    // ---- Video-only, tap 2: start MediaRecorder on the ALREADY-LIVE
+    // stream — no getUserMedia call, no second permission prompt.
+    // previewing → recording. ---------------------------------------------
+    function beginRecording() {
+      chunks = [];
+      chosenMimeType = pickMimeType(config.mimeCandidates);
+      var options = chosenMimeType ? { mimeType: chosenMimeType } : {};
+      try {
+        recorder = new MediaRecorder(stream, options);
+      } catch (e) {
+        setStatus('Recording isn’t supported on this device.', true);
+        return;
+      }
+
+      recorder.addEventListener('dataavailable', function (e) {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      });
+      recorder.addEventListener('stop', function () { finishRecording(); });
+      recorder.addEventListener('error', function (e) {
+        setStatus('Recording error: ' + (e.error ? e.error.message : 'unknown'), true);
+      });
+
+      recorder.start();
+      phase = 'recording';
+      startedAt = Date.now();
+      btn.textContent = 'Stop recording';
+      btn.classList.add('recording');
+      if (stageEl) stageEl.classList.add('recording'); // cosmetic border only — sizing already applied via .live
+      if (facingFrontBtn) facingFrontBtn.disabled = true;
+      if (facingBackBtn) facingBackBtn.disabled = true;
+      timerEl.classList.remove('hidden');
+      timerEl.textContent = '0:00';
+      setStatus('Recording…');
+      intervalId = setInterval(tick, 250);
+    }
+
     function stopRecording(reason) {
-      if (!isRecording || !recorder) return;
-      isRecording = false;
-      clearInterval(intervalId);
-      intervalId = null;
-      btn.textContent = 'Start recording';
-      btn.classList.remove('recording');
-      timerEl.classList.add('hidden');
-      if (reason) setStatus(reason);
-      if (recorder.state !== 'inactive') recorder.stop();
-      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
-      if (livePreviewEl) livePreviewEl.srcObject = null;
-      if (stageEl) stageEl.classList.remove('recording');
-      if (facingFrontBtn) facingFrontBtn.disabled = false;
-      if (facingBackBtn) facingBackBtn.disabled = false;
+      if (phase !== 'recording') return;
+      teardownStream(reason);
+    }
+
+    // ---- Video-only: stop a live-but-not-yet-recording preview. --------
+    function stopPreview(reason) {
+      if (phase !== 'previewing') return;
+      teardownStream(reason);
     }
 
     function finishRecording() {
-      if (!chunks.length) return; // cancelled before any data arrived
+      if (cancelled) { cancelled = false; return; } // abandoned via changeMode — never reaches review
+      if (!chunks.length) return; // no data captured
       var blob = new Blob(chunks, chosenMimeType ? { type: chosenMimeType } : undefined);
       var actualType = blob.type || (recorder && recorder.mimeType) || '';
       var measuredSeconds = (Date.now() - startedAt) / 1000;
@@ -748,8 +870,12 @@
     }
 
     btn.addEventListener('click', function () {
-      if (isRecording) {
+      if (phase === 'recording') {
         stopRecording('Stopped.');
+      } else if (phase === 'previewing') {
+        beginRecording();
+      } else if (config.livePreviewId) {
+        startPreview();
       } else {
         startRecording();
       }
@@ -757,30 +883,38 @@
 
     if (config.changeModeBtnId && config.areaId) {
       document.getElementById(config.changeModeBtnId).addEventListener('click', function () {
-        if (isRecording) stopRecording(null);
+        if (phase === 'recording' && config.livePreviewId) cancelled = true; // video only — see note above
+        if (phase === 'recording') stopRecording(null);
+        else if (phase === 'previewing') stopPreview(null);
         hide(document.getElementById(config.areaId));
         show(el.modePicker);
       });
     }
 
-    // Release the camera/mic if the tab is backgrounded or left mid-recording.
+    // Release the camera/mic if the tab is backgrounded or left — covers
+    // BOTH an active recording (unchanged from before: still flows to
+    // review, same as backgrounding always did) AND, new for video, a
+    // live-but-not-recording preview (which the old code never accounted
+    // for, since only 'recording' existed before — a backgrounded preview
+    // would otherwise leak the camera indefinitely).
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden && isRecording) {
-        stopRecording('Stopped — the page was backgrounded.');
-      }
+      if (!document.hidden) return;
+      if (phase === 'recording') stopRecording('Stopped — the page was backgrounded.');
+      else if (phase === 'previewing') stopPreview('Stopped — the page was backgrounded.');
     });
     window.addEventListener('pagehide', function () {
-      if (isRecording) stopRecording(null);
+      if (phase === 'recording') stopRecording(null);
+      else if (phase === 'previewing') stopPreview(null);
     });
 
     return {
-      resetUI: function () {
-        btn.textContent = 'Start recording';
-        btn.classList.remove('recording');
-        timerEl.classList.add('hidden');
-        timerEl.textContent = '0:00';
-        setStatus('');
-      },
+      // Full release — used by recordAgainBtn and defensively when
+      // entering review (belt-and-suspenders: the stream is already
+      // guaranteed released by the stop path that got there, since
+      // teardownStream always runs synchronously before the async
+      // recorder 'stop' event that leads to review — this doesn't rely
+      // on that ordering silently continuing to hold).
+      release: function () { teardownStream(null); },
     };
   }
 
@@ -831,6 +965,10 @@
     hide(el.reviewAudio); hide(el.reviewVideo);
 
     var isVideo = state.mode === 'video';
+    // Defensive release on entering review — see the comment on
+    // setupRecorder's returned `release` for why this is redundant-but-
+    // explicit rather than relying on the stop path's ordering alone.
+    (isVideo ? videoRecorder : voiceRecorder).release();
     var mediaEl = isVideo ? el.reviewVideo : el.reviewAudio;
     mediaEl.src = objectUrl;
     show(mediaEl);
@@ -840,7 +978,7 @@
     hide(el.reviewArea);
     var isVideo = state.mode === 'video';
     show(isVideo ? el.videoRecorderArea : el.voiceRecorderArea);
-    (isVideo ? videoRecorder : voiceRecorder).resetUI();
+    (isVideo ? videoRecorder : voiceRecorder).release();
     state.blob = null;
   });
 
