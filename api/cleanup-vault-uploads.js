@@ -38,11 +38,10 @@ const BUCKET = 'memories';
 const STALE_AFTER_MINUTES = 45;
 // Cap how many rows one run can touch — a spam burst (or just organic
 // growth) shouldn't be able to produce a batch large enough to blow the
-// function's execution timeout. Runs DAILY (Vercel Hobby plan caps cron
-// frequency at once/day — an hourly schedule failed the whole deployment
-// outright, not just this function), so an orphaned upload may sit for up
-// to ~24h before being swept, not 45 minutes — acceptable at this scale.
-// Nothing is lost by leaving any excess backlog for the next day's run.
+// function's execution timeout. Hourly runs drain any backlog naturally;
+// nothing is lost by leaving the rest for the next run. (Briefly ran daily
+// to fit under the Vercel Hobby plan's cron-frequency cap; reverted to
+// hourly after upgrading to Pro, which removes that restriction.)
 const MAX_ROWS_PER_RUN = 200;
 
 module.exports = async function handler(req, res) {
