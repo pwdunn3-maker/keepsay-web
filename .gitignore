@@ -1,3 +1,12 @@
 ﻿node_modules/
 .env
 .env.local
+
+# Pre-existing scaffolding/scratch files, purpose unknown — gitignored rather than
+# deleted since their history predates any session that has context on them.
+# 2026-07-17.
+check_icons.js
+fix_icons.js
+memory.html.bak
+memory_bak.html
+play_memory.png
