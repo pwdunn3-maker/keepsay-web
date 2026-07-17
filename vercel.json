@@ -42,7 +42,7 @@
     },
     {
       "path": "/api/cleanup-vault-uploads",
-      "schedule": "0 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
