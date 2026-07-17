@@ -32,12 +32,17 @@
     { "src": "/(.*)\\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff|woff2|ttf|otf|json|xml|txt|m4a|mp3|mp4|m4v|mov|wav|ogg|webm|pdf)", "dest": "/$1.$2" },
     { "src": "/", "dest": "/index.html" },
     { "src": "/invite/(.*)", "dest": "/invite.html" },
+    { "src": "/vault/(.*)", "dest": "/vault/[token].html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "crons": [
     {
       "path": "/api/r2-backup",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cleanup-vault-uploads",
+      "schedule": "0 * * * *"
     }
   ]
 }

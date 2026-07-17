@@ -63,6 +63,22 @@ function contentTypeFor(filePath) {
 }
 
 module.exports = async function handler(req, res) {
+  // Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` automatically
+  // when the CRON_SECRET env var is set on the project — verify it so this
+  // isn't a publicly-triggerable backup-trigger endpoint. Requires Patrick
+  // to set CRON_SECRET in Vercel's project env vars; until then this
+  // refuses to run (fails closed, never open). Same pattern as
+  // api/cleanup-vault-uploads.js.
+  const expectedSecret = process.env.CRON_SECRET;
+  if (!expectedSecret) {
+    console.error('r2-backup: CRON_SECRET is not configured — refusing to run');
+    return res.status(500).json({ error: 'Not configured' });
+  }
+  const authHeader = req.headers.authorization || '';
+  if (authHeader !== `Bearer ${expectedSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   try {
     if (!R2_ACCESS_KEY_ID || !R2_SECRET_ACCESS_KEY) {
       console.error('r2-backup: missing R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY');

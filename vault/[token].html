@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Leave a message — Keepsay Wedding Vault</title>
+<meta name="description" content="Record a private voice or video message for the couple. It stays sealed until they choose to open it.">
+<link rel="icon" href="/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+
+<!-- ============================================================
+  vault/[token].html — Wedding Vault contributor web page.
+  docs/wedding-vault-build-plan.md §5. No account, no app, no download
+  required to leave a message. Talks only to /api/get-vault-info and
+  /api/submit-vault-contribution — never a Supabase key on this page.
+
+  Recording mechanics (MediaRecorder setup, mimeType detection/fallback,
+  auto-stop-at-cap timer + warning window, visibilitychange/pagehide
+  cleanup, blob-URL revocation, the "video-stage" fixed-button-position
+  pattern) are ported from the proven mediarecorder-test.html prototype —
+  tested clean on iPhone 17, iPhone 11, and a Galaxy Tab S8 (Android 13).
+
+  Brand tokens below are the same DESIGN.md-locked values the prototype
+  already used. Playfair Display is reserved for the two "experience"
+  moments (the couple-name invite hero, the success headline) — every
+  other line on this page is the system font, per DESIGN.md's typography
+  tiers (task/action surfaces stay system font).
+============================================================ -->
+
+<style>
+  :root {
+    --green: #1B4332;
+    --green-dark: #0F2A1F;
+    --gold: #D4AF37;
+    --cream: #F7F3EA;
+    --card: #FDFBF5;
+    --card-border: #E5DCC8;
+    --ink: #102A1F;
+    --ink-soft: #5C6B62;
+    --ok: #2d6a4f;
+    --bad: #A0402A;
+    --warn: #B8860B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.6;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 40px;
+  }
+  .playfair { font-family: 'Playfair Display', serif; }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+
+  .topbar { display: flex; justify-content: center; padding: 22px 20px 6px; }
+  .brand { display: flex; align-items: center; gap: .5rem; text-decoration: none; color: var(--green-dark); }
+  .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--green-dark); display: grid; place-items: center; padding: 4px; }
+  .brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+  .brand-name { font-weight: 700; font-size: 1.05rem; letter-spacing: -.2px; }
+
+  .wrap { max-width: 560px; margin: 0 auto; padding: 8px 20px 0; }
+
+  /* ---------- generic state / card scaffolding ---------- */
+  .state.hidden { display: none; }
+  .hidden { display: none !important; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 22px 22px 24px;
+    margin-bottom: 18px;
+  }
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 14px;
+  }
+
+  /* ---------- loading ---------- */
+  #loadingState { text-align: center; padding: 90px 20px; color: var(--ink-soft); }
+  .spinner {
+    display: inline-block; width: 26px; height: 26px;
+    border: 3px solid var(--card-border); border-top-color: var(--green);
+    border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- error ---------- */
+  #errorState { text-align: center; padding: 70px 20px 30px; }
+  #errorState h1 { font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+  #errorState p { color: var(--ink-soft); max-width: 40ch; margin: 0 auto; }
+
+  /* ---------- invite hero ---------- */
+  .invite { text-align: center; padding: 26px 4px 6px; }
+  .eyebrow {
+    font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: #8a6d1a; margin-bottom: 10px;
+  }
+  .invite h1 {
+    font-weight: 700; font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.2;
+    color: var(--green-dark); margin-bottom: 12px;
+  }
+  .invite-sub { color: var(--ink-soft); max-width: 40ch; margin: 0 auto; font-size: 15px; }
+
+  /* ---------- form fields ---------- */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--card-border); border-radius: 10px;
+    font: inherit; font-size: 15px; color: var(--ink); background: #fff; outline: none;
+    transition: border-color .15s;
+  }
+  .field input:focus { border-color: var(--green); }
+  .field-error { font-size: 12.5px; color: var(--bad); margin-top: 6px; min-height: 0; }
+
+  /* ---------- mode picker ---------- */
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .mode-card {
+    font: inherit; text-align: left; cursor: pointer;
+    background: var(--card); border: 1.5px solid var(--card-border); border-radius: 14px;
+    padding: 16px 16px 15px; transition: border-color .15s, background .15s;
+  }
+  .mode-card:hover, .mode-card:focus-visible { border-color: var(--green); background: #F1EEE1; }
+  .mode-title { display: block; font-weight: 700; font-size: 15px; color: var(--ink); margin-bottom: 4px; }
+  .mode-sub { display: block; font-size: 12.5px; color: var(--ink-soft); }
+  @media (max-width: 420px) { .mode-grid { grid-template-columns: 1fr; } }
+
+  .unsupported-note {
+    font-size: 13.5px; color: var(--ink-soft); background: #FBF4DC; border: 1px solid var(--gold);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;
+  }
+
+  /* ---------- recorder (ported from mediarecorder-test.html) ---------- */
+  .facing-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+  .facing-btn {
+    flex: 1; font: inherit; font-size: 13px; font-weight: 600; padding: 9px 10px;
+    border-radius: 999px; border: 1px solid var(--card-border); background: var(--card);
+    color: var(--ink-soft); cursor: pointer;
+  }
+  .facing-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .facing-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .video-stage {
+    position: relative; width: 100%; min-height: 0; border-radius: 12px;
+    background: transparent; border: 2px solid transparent; margin-bottom: 6px; overflow: hidden;
+  }
+  .video-stage.video-mode { min-height: 82px; margin-bottom: 14px; }
+  .video-stage.video-mode.recording {
+    background: #000; border-color: var(--bad); aspect-ratio: 3 / 4; max-height: 48vh;
+  }
+  .live-preview {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0;
+  }
+  .video-stage.video-mode.recording .live-preview { opacity: 1; }
+  .video-stage.voice-mode .stage-controls { position: static; padding: 0; justify-content: flex-start; }
+
+  .stage-controls {
+    position: absolute; left: 0; right: 0; top: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 0 14px;
+  }
+  .video-stage:not(.video-mode) .stage-controls,
+  .video-stage.voice-mode .stage-controls { position: static; padding: 0; justify-content: flex-start; }
+  .stage-controls .rec-btn { box-shadow: 0 2px 12px rgba(0,0,0,0.35); }
+  .video-stage.voice-mode .stage-controls .rec-btn,
+  .video-stage:not(.recording) .stage-controls .rec-btn { box-shadow: none; }
+  .stage-controls .timer { color: #fff; background: rgba(0,0,0,0.45); padding: 4px 10px; border-radius: 8px; }
+  .video-stage.voice-mode .stage-controls .timer,
+  .video-stage:not(.recording) .stage-controls .timer { color: var(--ink); background: none; padding: 0; }
+  .stage-controls .timer.warn { color: var(--warn); }
+  .video-stage.recording .stage-controls .timer.warn { color: #ffd27a; }
+
+  button.rec-btn {
+    font: inherit; font-weight: 700; font-size: 15px; color: #fff; background: var(--green);
+    border: none; border-radius: 999px; padding: 13px 26px; cursor: pointer;
+  }
+  button.rec-btn.recording { background: var(--bad); }
+  button.rec-btn:disabled { background: #9CA79E; cursor: not-allowed; }
+
+  .timer { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; min-width: 54px; }
+  .timer.hidden { visibility: hidden; }
+
+  .status-line { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; min-height: 18px; }
+  .status-line.error { color: var(--bad); font-weight: 600; }
+
+  .link-btn {
+    display: inline-block; margin-top: 10px; font: inherit; font-size: 13px; font-weight: 600;
+    color: var(--green); background: none; border: none; cursor: pointer; text-decoration: underline;
+    padding: 4px 0;
+  }
+
+  /* ---------- review ---------- */
+  .review-card audio, .review-card video {
+    width: 100%; border-radius: 10px; background: #000; margin-bottom: 16px;
+  }
+  .review-actions { display: flex; gap: 12px; }
+  .btn-primary, .btn-secondary {
+    flex: 1; font: inherit; font-weight: 700; font-size: 15px; padding: 13px 16px;
+    border-radius: 999px; cursor: pointer; border: none;
+  }
+  .btn-primary { background: var(--gold); color: #1A1A1A; }
+  .btn-primary:hover { opacity: .92; }
+  .btn-secondary { background: transparent; color: var(--ink-soft); border: 1px solid var(--card-border); }
+
+  /* ---------- upload ---------- */
+  .progress-track { height: 10px; background: #EFE9DA; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+  .progress-fill { height: 100%; width: 0%; background: var(--green); border-radius: 6px; transition: width .2s ease; }
+  .upload-status { font-size: 13.5px; color: var(--ink-soft); }
+
+  .submit-error {
+    font-size: 13.5px; color: var(--bad); font-weight: 600; text-align: center; min-height: 0; margin-top: 4px;
+  }
+
+  /* ---------- success ---------- */
+  #successState { text-align: center; padding: 40px 4px 10px; }
+  #successState h1 { font-weight: 700; font-size: clamp(1.7rem, 6vw, 2.2rem); color: var(--green-dark); margin-bottom: 10px; }
+  #successSub { color: var(--ink-soft); font-size: 15px; max-width: 38ch; margin: 0 auto; }
+
+  .keepsay-note {
+    margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--card-border);
+  }
+  .keepsay-note p { color: var(--ink-soft); max-width: 40ch; margin: 0 auto 22px; font-size: 14.5px; }
+  .badges { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .badges a { display: inline-block; border-radius: 10px; }
+  .badges img { height: 48px; width: auto; }
+  .badges .play-store img { height: 72px; margin: -12px; }
+
+  footer { max-width: 560px; margin: 30px auto 0; padding: 0 20px; font-size: 12px; color: var(--ink-soft); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="brand" href="https://www.getkeepsay.com" aria-label="Keepsay home">
+    <span class="brand-mark"><img src="/logo-kheart.png" alt=""></span>
+    <span class="brand-name">Keepsay</span>
+  </a>
+</div>
+
+<noscript>
+  <div class="wrap"><p style="text-align:center;padding:60px 0;color:var(--ink-soft)">This page needs JavaScript enabled to record a message.</p></div>
+</noscript>
+
+<main class="wrap">
+
+  <!-- ===================== LOADING ===================== -->
+  <section id="loadingState" class="state">
+    <div class="spinner" role="status" aria-label="Loading"></div>
+    <p>Loading…</p>
+  </section>
+
+  <!-- ===================== ERROR ===================== -->
+  <section id="errorState" class="state hidden">
+    <h1 id="errorTitle"></h1>
+    <p id="errorBody"></p>
+  </section>
+
+  <!-- ===================== MAIN (invite + recorder) ===================== -->
+  <section id="mainState" class="state hidden">
+
+    <header class="invite">
+      <p class="eyebrow">You&rsquo;re invited to leave a message</p>
+      <h1 id="coupleName" class="playfair"></h1>
+      <p class="invite-sub">Something for them to keep, in your own voice — a toast, a memory, a wish for what&rsquo;s ahead. It stays sealed until they choose to open it.</p>
+    </header>
+
+    <div class="card">
+      <p class="section-label">Your message</p>
+      <div class="field">
+        <label for="nameInput">Your name *</label>
+        <input type="text" id="nameInput" maxlength="60" placeholder="e.g. Aunt Carol, Jordan" autocomplete="name">
+        <p class="field-error" id="nameError"></p>
+      </div>
+      <div class="field">
+        <label for="emailInput">Your email (optional)</label>
+        <input type="email" id="emailInput" placeholder="so they can thank you" autocomplete="email">
+      </div>
+    </div>
+
+    <p id="unsupportedNotice" class="unsupported-note hidden">
+      Recording isn&rsquo;t supported in this browser. If you opened this link inside another app (like Messages,
+      Instagram, or Facebook), try opening it in Safari or Chrome directly — or try a different device.
+    </p>
+
+    <div id="modePicker" class="mode-grid">
+      <button type="button" class="mode-card" id="chooseVoiceBtn">
+        <span class="mode-title">Record a voice message</span>
+        <span class="mode-sub">Up to 5 minutes</span>
+      </button>
+      <button type="button" class="mode-card" id="chooseVideoBtn">
+        <span class="mode-title">Record a video message</span>
+        <span class="mode-sub">Up to 3 minutes</span>
+      </button>
+    </div>
+
+    <div id="recorderArea" class="card hidden">
+      <p class="section-label" id="recorderLabel">Record your message</p>
+
+      <div class="facing-toggle hidden" id="facingToggle">
+        <button type="button" class="facing-btn active" id="facingFrontBtn">Front camera</button>
+        <button type="button" class="facing-btn" id="facingBackBtn">Back camera</button>
+      </div>
+
+      <div class="video-stage" id="videoStage">
+        <video id="livePreview" class="live-preview" autoplay muted playsinline></video>
+        <div class="stage-controls">
+          <button type="button" class="rec-btn" id="recBtn">Start recording</button>
+          <span class="timer hidden" id="recTimer">0:00</span>
+        </div>
+      </div>
+
+      <p class="status-line" id="recStatus"></p>
+      <button type="button" class="link-btn" id="changeModeBtn">Choose a different way to record</button>
+    </div>
+
+    <div id="reviewArea" class="card hidden">
+      <p class="section-label">Review your message</p>
+      <audio id="reviewAudio" controls class="hidden"></audio>
+      <video id="reviewVideo" controls playsinline class="hidden"></video>
+      <div class="review-actions">
+        <button type="button" class="btn-secondary" id="recordAgainBtn">Record again</button>
+        <button type="button" class="btn-primary" id="submitBtn">Submit</button>
+      </div>
+    </div>
+
+    <div id="uploadArea" class="card hidden">
+      <p class="section-label">Sending your message&hellip;</p>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <p class="upload-status" id="uploadStatus">Uploading&hellip;</p>
+    </div>
+
+    <p class="submit-error" id="submitError"></p>
+  </section>
+
+  <!-- ===================== SUCCESS ===================== -->
+  <section id="successState" class="state hidden">
+    <h1 class="playfair">Your message is safe in the vault.</h1>
+    <p id="successSub"></p>
+
+    <div class="keepsay-note">
+      <p>This message now lives in Keepsay — a private place to keep the moments and voices that matter, sealed
+        until the people you love are ready. If you&rsquo;d like a place like this of your own, Keepsay is free to start.</p>
+      <div class="badges">
+        <a data-umami-event="store-click" data-umami-event-store="ios" data-umami-event-loc="vault-success"
+           href="https://apps.apple.com/app/id6774806816" aria-label="Download Keepsay on the App Store">
+          <img src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us" alt="Download on the App Store">
+        </a>
+        <a data-umami-event="store-click" data-umami-event-store="android" data-umami-event-loc="vault-success"
+           class="play-store" href="https://play.google.com/store/apps/details?id=com.stubborngood.keepsay" aria-label="Get Keepsay on Google Play">
+          <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play">
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>Keepsay &middot; <a href="https://www.getkeepsay.com/privacy">Privacy</a></footer>
+
+<script defer src="https://cloud.umami.is/script.js" data-website-id="68325c4c-5f06-40f1-aa54-29e34f64a261"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------- element refs ----------
+  var el = {};
+  ['loadingState','errorState','errorTitle','errorBody','mainState','coupleName',
+   'nameInput','nameError','emailInput','unsupportedNotice','modePicker',
+   'chooseVoiceBtn','chooseVideoBtn','recorderArea','recorderLabel',
+   'facingToggle','facingFrontBtn','facingBackBtn','videoStage','livePreview',
+   'recBtn','recTimer','recStatus','changeModeBtn','reviewArea','reviewAudio',
+   'reviewVideo','recordAgainBtn','submitBtn','uploadArea','progressFill',
+   'uploadStatus','submitError','successState','successSub'
+  ].forEach(function (id) { el[id] = document.getElementById(id); });
+
+  function show(node) { node.classList.remove('hidden'); }
+  function hide(node) { node.classList.add('hidden'); }
+
+  // ---------- support check ----------
+  var hasMediaRecorder = typeof window.MediaRecorder !== 'undefined';
+  var hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  var canRecord = hasMediaRecorder && hasGetUserMedia;
+
+  function isTypeSupported(mt) {
+    if (!hasMediaRecorder || typeof MediaRecorder.isTypeSupported !== 'function') return false;
+    try { return MediaRecorder.isTypeSupported(mt); } catch (e) { return false; }
+  }
+  function pickMimeType(candidates) {
+    for (var i = 0; i < candidates.length; i++) {
+      if (isTypeSupported(candidates[i])) return candidates[i];
+    }
+    return '';
+  }
+  function fmtTime(totalSeconds) {
+    var m = Math.floor(totalSeconds / 60);
+    var s = Math.floor(totalSeconds % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  // ---------- app state ----------
+  var state = {
+    token: null,
+    blob: null,
+    mode: null,          // 'voice' | 'video'
+    durationSeconds: 0,
+  };
+
+  var RECORDER_CONFIG = {
+    voice: {
+      constraints: { audio: true },
+      mimeCandidates: ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'],
+      capSeconds: 300, warnBeforeSeconds: 30, label: 'Record your voice message',
+    },
+    video: {
+      mimeCandidates: ['video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'],
+      capSeconds: 180, warnBeforeSeconds: 30, label: 'Record your video message',
+    },
+  };
+
+  // ============================================================
+  // Boot: resolve token from the URL path, fetch vault info.
+  // ============================================================
+  function getTokenFromPath() {
+    var parts = window.location.pathname.split('/').filter(Boolean);
+    if (parts.length >= 2 && parts[0] === 'vault') return decodeURIComponent(parts[1]);
+    return null;
+  }
+
+  var ERROR_COPY = {
+    invalid_token: {
+      title: 'We couldn’t find this vault',
+      body: 'The link may be mistyped. Double-check it, or reach out to the couple who invited you.',
+    },
+    window_closed: {
+      title: 'This vault has stopped taking new messages',
+      body: 'Your thoughtfulness means a lot. If you’d still like to share something, reach out to {name} directly.',
+    },
+    storage_full: {
+      title: 'This vault is full for now',
+      body: '{name} has already gathered plenty of messages. If you’d still like to share something, reach out to them directly.',
+    },
+    lookup_failed: {
+      title: 'Something went wrong',
+      body: 'We couldn’t load this page. Please try again in a moment.',
+    },
+  };
+
+  function showError(reason, coupleName) {
+    var copy = ERROR_COPY[reason] || ERROR_COPY.lookup_failed;
+    el.errorTitle.textContent = copy.title;
+    el.errorBody.textContent = copy.body.replace('{name}', coupleName || 'the couple');
+    hide(el.loadingState); hide(el.mainState); hide(el.successState);
+    show(el.errorState);
+  }
+
+  function boot() {
+    var token = getTokenFromPath();
+    if (!token) { showError('invalid_token', null); return; }
+    state.token = token;
+
+    // get-vault-info.js always returns an explicit `reason` field (one of
+    // 'invalid_token' | 'window_closed' | 'storage_full' | 'lookup_failed',
+    // or null when the vault is open) for both success and error responses —
+    // read it directly rather than re-deriving it from the HTTP status plus
+    // separate booleans. Same contract submitErrorFromResponse() already
+    // relies on for submit-vault-contribution.js's `reason` field.
+    fetch('/api/get-vault-info?token=' + encodeURIComponent(token))
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (!result.ok) { showError(data.reason || 'lookup_failed', data.coupleName || null); return; }
+        if (data.reason) { showError(data.reason, data.coupleName || null); return; }
+        showMain(data);
+      })
+      .catch(function () { showError('lookup_failed', null); });
+  }
+
+  function showMain(info) {
+    el.coupleName.textContent = info.coupleName || '';
+    hide(el.loadingState);
+    show(el.mainState);
+
+    if (!canRecord) {
+      hide(el.modePicker);
+      show(el.unsupportedNotice);
+    }
+  }
+
+  // ============================================================
+  // Name gate — required before recording can start.
+  // ============================================================
+  function validName() {
+    var v = el.nameInput.value.trim();
+    if (!v) { el.nameError.textContent = 'Please enter your name.'; el.nameInput.focus(); return null; }
+    if (v.length > 60) { el.nameError.textContent = 'Please keep it under 60 characters.'; el.nameInput.focus(); return null; }
+    el.nameError.textContent = '';
+    return v;
+  }
+  el.nameInput.addEventListener('input', function () { el.nameError.textContent = ''; });
+
+  // ============================================================
+  // Mode selection → recorder ready state.
+  // ============================================================
+  var currentFacing = 'user';
+
+  function enterMode(mode) {
+    if (!validName()) return;
+    state.mode = mode;
+    hide(el.modePicker);
+    show(el.recorderArea);
+    el.recorderLabel.textContent = RECORDER_CONFIG[mode].label;
+    el.recStatus.textContent = '';
+    el.recStatus.classList.remove('error');
+
+    if (mode === 'video') {
+      show(el.facingToggle);
+      el.videoStage.classList.add('video-mode');
+      el.videoStage.classList.remove('voice-mode');
+    } else {
+      hide(el.facingToggle);
+      el.videoStage.classList.add('voice-mode');
+      el.videoStage.classList.remove('video-mode');
+    }
+    resetRecBtn();
+  }
+
+  el.chooseVoiceBtn.addEventListener('click', function () { enterMode('voice'); });
+  el.chooseVideoBtn.addEventListener('click', function () { enterMode('video'); });
+
+  el.facingFrontBtn.addEventListener('click', function () {
+    if (isRecording) return;
+    currentFacing = 'user';
+    el.facingFrontBtn.classList.add('active'); el.facingBackBtn.classList.remove('active');
+  });
+  el.facingBackBtn.addEventListener('click', function () {
+    if (isRecording) return;
+    currentFacing = 'environment';
+    el.facingBackBtn.classList.add('active'); el.facingFrontBtn.classList.remove('active');
+  });
+
+  el.changeModeBtn.addEventListener('click', function () {
+    if (isRecording) stopRecording(null);
+    hide(el.recorderArea);
+    show(el.modePicker);
+  });
+
+  // ============================================================
+  // Recorder — ported from mediarecorder-test.html's setupRecorder().
+  // Only one recorder is ever active at a time on this page, driven
+  // by state.mode, so this is a single shared instance rather than
+  // per-mode setup like the prototype.
+  // ============================================================
+  var stream = null, recorder = null, chunks = [], startedAt = 0;
+  var intervalId = null, isRecording = false, chosenMimeType = '', currentObjectUrl = null;
+
+  function resetRecBtn() {
+    el.recBtn.textContent = 'Start recording';
+    el.recBtn.classList.remove('recording');
+    el.recBtn.disabled = false;
+    el.recTimer.classList.add('hidden');
+    el.recTimer.textContent = '0:00';
+  }
+
+  function friendlyGetUserMediaError(err) {
+    if (err && err.name === 'NotAllowedError') {
+      return 'We need permission to use your ' + (state.mode === 'video' ? 'camera and microphone' : 'microphone') + '. Please allow access and try again.';
+    }
+    if (err && err.name === 'NotFoundError') {
+      return 'We couldn’t find a ' + (state.mode === 'video' ? 'camera or microphone' : 'microphone') + ' on this device.';
+    }
+    return 'We couldn’t start recording. Please try again.';
+  }
+
+  function tick() {
+    var cfg = RECORDER_CONFIG[state.mode];
+    var elapsed = (Date.now() - startedAt) / 1000;
+    el.recTimer.textContent = fmtTime(elapsed);
+    var remaining = cfg.capSeconds - elapsed;
+    el.recTimer.classList.toggle('warn', remaining <= cfg.warnBeforeSeconds && remaining > 0);
+    if (elapsed >= cfg.capSeconds) stopRecording('Reached the ' + fmtTime(cfg.capSeconds) + ' limit.');
+  }
+
+  function startRecording() {
+    var cfg = RECORDER_CONFIG[state.mode];
+    chunks = [];
+    el.recStatus.textContent = 'Requesting permission…';
+    el.recStatus.classList.remove('error');
+
+    var constraints = state.mode === 'video'
+      ? { video: { facingMode: currentFacing }, audio: true }
+      : cfg.constraints;
+
+    navigator.mediaDevices.getUserMedia(constraints).then(function (s) {
+      stream = s;
+      if (state.mode === 'video') {
+        el.livePreview.srcObject = stream;
+        el.videoStage.classList.add('recording');
+      }
+      chosenMimeType = pickMimeType(cfg.mimeCandidates);
+      var options = chosenMimeType ? { mimeType: chosenMimeType } : {};
+
+      try {
+        recorder = new MediaRecorder(stream, options);
+      } catch (e) {
+        el.recStatus.textContent = 'Recording isn’t supported on this device.';
+        el.recStatus.classList.add('error');
+        stream.getTracks().forEach(function (t) { t.stop(); });
+        el.videoStage.classList.remove('recording');
+        return;
+      }
+
+      recorder.addEventListener('dataavailable', function (e) {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      });
+      recorder.addEventListener('stop', finishRecording);
+      recorder.addEventListener('error', function (e) {
+        el.recStatus.textContent = 'Recording error: ' + (e.error ? e.error.message : 'unknown');
+        el.recStatus.classList.add('error');
+      });
+
+      recorder.start();
+      isRecording = true;
+      startedAt = Date.now();
+      el.recBtn.textContent = 'Stop recording';
+      el.recBtn.classList.add('recording');
+      el.facingFrontBtn.disabled = true;
+      el.facingBackBtn.disabled = true;
+      el.recTimer.classList.remove('hidden');
+      el.recTimer.textContent = '0:00';
+      el.recStatus.textContent = 'Recording…';
+      intervalId = setInterval(tick, 250);
+    }).catch(function (err) {
+      el.recStatus.textContent = friendlyGetUserMediaError(err);
+      el.recStatus.classList.add('error');
+    });
+  }
+
+  function stopRecording(reason) {
+    if (!isRecording || !recorder) return;
+    isRecording = false;
+    clearInterval(intervalId); intervalId = null;
+    el.recBtn.textContent = 'Start recording';
+    el.recBtn.classList.remove('recording');
+    el.recTimer.classList.add('hidden');
+    if (reason) { el.recStatus.textContent = reason; }
+    if (recorder.state !== 'inactive') recorder.stop();
+    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+    el.livePreview.srcObject = null;
+    el.videoStage.classList.remove('recording');
+    el.facingFrontBtn.disabled = false;
+    el.facingBackBtn.disabled = false;
+  }
+
+  function finishRecording() {
+    if (!chunks.length) return; // cancelled before any data arrived
+    var blob = new Blob(chunks, chosenMimeType ? { type: chosenMimeType } : undefined);
+    var actualType = blob.type || (recorder && recorder.mimeType) || '';
+    var measuredSeconds = (Date.now() - startedAt) / 1000;
+
+    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = URL.createObjectURL(blob);
+
+    state.blob = blob;
+    state.durationSeconds = measuredSeconds;
+
+    showReview(actualType, currentObjectUrl);
+  }
+
+  el.recBtn.addEventListener('click', function () {
+    if (isRecording) stopRecording('Stopped.');
+    else startRecording();
+  });
+
+  // Release the camera/mic if the tab is backgrounded or left mid-recording.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && isRecording) stopRecording('Stopped — the page was backgrounded.');
+  });
+  window.addEventListener('pagehide', function () {
+    if (isRecording) stopRecording(null);
+  });
+  window.addEventListener('beforeunload', function (e) {
+    if (uploading) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  // ============================================================
+  // Review → Record again / Submit.
+  // ============================================================
+  function showReview(mimeType, objectUrl) {
+    hide(el.recorderArea);
+    show(el.reviewArea);
+    hide(el.reviewAudio); hide(el.reviewVideo);
+
+    var isVideo = state.mode === 'video';
+    var mediaEl = isVideo ? el.reviewVideo : el.reviewAudio;
+    mediaEl.src = objectUrl;
+    show(mediaEl);
+  }
+
+  el.recordAgainBtn.addEventListener('click', function () {
+    hide(el.reviewArea);
+    show(el.recorderArea);
+    resetRecBtn();
+    el.recStatus.textContent = '';
+    el.recStatus.classList.remove('error');
+    state.blob = null;
+  });
+
+  // ============================================================
+  // Submit — init (signed upload URL) → PUT the blob → finalize.
+  // ============================================================
+  var uploading = false;
+
+  function postJSON(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (data) {
+        return { ok: res.ok, status: res.status, data: data };
+      });
+    });
+  }
+
+  function putToSignedUrl(url, blob, onProgress) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', url, true);
+      xhr.setRequestHeader('Content-Type', blob.type || 'application/octet-stream');
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error('Upload failed. Please check your connection and try again.'));
+      };
+      xhr.onerror = function () { reject(new Error('Upload failed. Please check your connection and try again.')); };
+      xhr.send(blob);
+    });
+  }
+
+  function setProgress(pct) { el.progressFill.style.width = Math.max(0, Math.min(100, pct)) + '%'; }
+
+  function submitErrorFromResponse(res) {
+    var reason = res.data && res.data.reason;
+    var message = (res.data && res.data.error) || 'We couldn’t send your message. Please try again.';
+    var err = new Error(message);
+    if (reason === 'window_closed' || reason === 'invalid_token' || reason === 'storage_full') {
+      err.terminalReason = reason;
+    }
+    return err;
+  }
+
+  el.submitBtn.addEventListener('click', function () {
+    if (!state.blob || uploading) return;
+    uploading = true;
+    hide(el.reviewArea);
+    show(el.uploadArea);
+    el.submitError.textContent = '';
+    setProgress(0);
+    el.uploadStatus.textContent = 'Preparing…';
+
+    var fileSizeMb = state.blob.size / (1024 * 1024);
+    var uploadRef = null;
+    // Read once, reused in both calls below — init now writes a real
+    // (pending) vault_contributions row up front, so it needs the same
+    // contributor fields finalize does.
+    var contributorName = el.nameInput.value.trim();
+    var contributorEmail = el.emailInput.value.trim();
+
+    postJSON('/api/submit-vault-contribution', {
+      action: 'init',
+      token: state.token,
+      recordingType: state.mode,
+      durationSeconds: state.durationSeconds,
+      fileSizeMb: fileSizeMb,
+      mimeType: state.blob.type,
+      contributorName: contributorName,
+      contributorEmail: contributorEmail,
+    }).then(function (initRes) {
+      if (!initRes.ok) throw submitErrorFromResponse(initRes);
+      uploadRef = initRes.data;
+      el.uploadStatus.textContent = 'Sending your message…';
+      return putToSignedUrl(uploadRef.uploadUrl, state.blob, function (pct) { setProgress(pct); });
+    }).then(function () {
+      el.uploadStatus.textContent = 'Finishing up…';
+      setProgress(100);
+      return postJSON('/api/submit-vault-contribution', {
+        action: 'finalize',
+        token: state.token,
+        vaultId: uploadRef.vaultId,
+        contributionId: uploadRef.contributionId,
+        path: uploadRef.path,
+        recordingType: state.mode,
+        durationSeconds: state.durationSeconds,
+        fileSizeMb: fileSizeMb,
+        contributorName: contributorName,
+        contributorEmail: contributorEmail,
+      });
+    }).then(function (finalRes) {
+      if (!finalRes.ok) throw submitErrorFromResponse(finalRes);
+      uploading = false;
+      showSuccess(finalRes.data.coupleName, finalRes.data.unlockDate);
+    }).catch(function (err) {
+      uploading = false;
+      if (err.terminalReason) {
+        showError(err.terminalReason, el.coupleName.textContent);
+        return;
+      }
+      hide(el.uploadArea);
+      show(el.reviewArea);
+      el.submitError.textContent = err.message || 'Something went wrong. Please try again.';
+      console.error('vault submit error:', err);
+    });
+  });
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (e) { return ''; }
+  }
+
+  function showSuccess(coupleName, unlockDate) {
+    hide(el.mainState);
+    var formatted = formatDate(unlockDate);
+    el.successSub.textContent = (coupleName || 'They') + ' will open it' + (formatted ? ' on ' + formatted + '.' : '.');
+    show(el.successState);
+    if (window.umami) window.umami.track('vault-contribution-submitted');
+  }
+
+  boot();
+})();
+</script>
+
+</body>
+</html>
