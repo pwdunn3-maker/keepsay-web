@@ -20,8 +20,18 @@
   Recording mechanics (MediaRecorder setup, mimeType detection/fallback,
   auto-stop-at-cap timer + warning window, visibilitychange/pagehide
   cleanup, blob-URL revocation, the "video-stage" fixed-button-position
-  pattern) are ported from the proven mediarecorder-test.html prototype —
-  tested clean on iPhone 17, iPhone 11, and a Galaxy Tab S8 (Android 13).
+  pattern) are ported DIRECTLY from the proven mediarecorder-test.html
+  prototype (setupRecorder()) — tested clean on iPhone 17, iPhone 11, and
+  a Galaxy Tab S8 (Android 13). This page uses the SAME structure the
+  prototype validated: TWO fully independent recorder instances (voice,
+  video), each with its own DOM subtree, its own button/timer/status
+  elements, its own closure-scoped stream/recorder/isRecording state —
+  never shared between modes. An earlier version of this file
+  consolidated both into one unified element toggled by a CSS mode class;
+  that novel, never-device-tested structure broke voice recording
+  entirely and regressed the video layout (late-opening box, invisible
+  until recording, jank) on real-device testing — reverted back to the
+  exact two-instance pattern below.
 
   Brand tokens below are the same DESIGN.md-locked values the prototype
   already used. Playfair Display is reserved for the two "experience"
@@ -141,56 +151,104 @@
     border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;
   }
 
-  /* ---------- recorder (ported from mediarecorder-test.html) ---------- */
-  .facing-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
-  .facing-btn {
-    flex: 1; font: inherit; font-size: 13px; font-weight: 600; padding: 9px 10px;
-    border-radius: 999px; border: 1px solid var(--card-border); background: var(--card);
-    color: var(--ink-soft); cursor: pointer;
+  /* ---------- recorder — ported directly from mediarecorder-test.html ---------- */
+  .facing-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
   }
-  .facing-btn.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .facing-btn {
+    flex: 1;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--card-border);
+    background: var(--card);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .facing-btn.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: #fff;
+  }
   .facing-btn:disabled { opacity: .5; cursor: not-allowed; }
 
   .video-stage {
-    position: relative; width: 100%; min-height: 0; border-radius: 12px;
-    background: transparent; border: 2px solid transparent; margin-bottom: 6px; overflow: hidden;
+    position: relative;
+    width: 100%;
+    min-height: 82px;
+    border-radius: 10px;
+    background: transparent;
+    border: 2px solid transparent;
+    margin-bottom: 14px;
+    overflow: hidden;
   }
-  .video-stage.video-mode { min-height: 82px; margin-bottom: 14px; }
-  .video-stage.video-mode.recording {
-    background: #000; border-color: var(--bad); aspect-ratio: 3 / 4; max-height: 48vh;
+  .video-stage.recording {
+    background: #000;
+    border-color: var(--bad);
+    aspect-ratio: 3 / 4;
+    max-height: 48vh;
   }
   .live-preview {
-    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 0;
   }
-  .video-stage.video-mode.recording .live-preview { opacity: 1; }
-  .video-stage.voice-mode .stage-controls { position: static; padding: 0; justify-content: flex-start; }
-
+  .video-stage.recording .live-preview { opacity: 1; }
   .stage-controls {
-    position: absolute; left: 0; right: 0; top: 14px;
-    display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; padding: 0 14px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 0 14px;
   }
-  .video-stage:not(.video-mode) .stage-controls,
-  .video-stage.voice-mode .stage-controls { position: static; padding: 0; justify-content: flex-start; }
-  .stage-controls .rec-btn { box-shadow: 0 2px 12px rgba(0,0,0,0.35); }
-  .video-stage.voice-mode .stage-controls .rec-btn,
-  .video-stage:not(.recording) .stage-controls .rec-btn { box-shadow: none; }
-  .stage-controls .timer { color: #fff; background: rgba(0,0,0,0.45); padding: 4px 10px; border-radius: 8px; }
-  .video-stage.voice-mode .stage-controls .timer,
-  .video-stage:not(.recording) .stage-controls .timer { color: var(--ink); background: none; padding: 0; }
-  .stage-controls .timer.warn { color: var(--warn); }
-  .video-stage.recording .stage-controls .timer.warn { color: #ffd27a; }
+  .stage-controls .rec-btn { box-shadow: 0 2px 12px rgba(0,0,0,0.45); }
+  .stage-controls .timer {
+    color: #fff;
+    background: rgba(0,0,0,0.45);
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+  .stage-controls .timer.warn { color: #ffd27a; }
+
+  .record-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
 
   button.rec-btn {
-    font: inherit; font-weight: 700; font-size: 15px; color: #fff; background: var(--green);
-    border: none; border-radius: 999px; padding: 13px 26px; cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    background: var(--green);
+    border: none;
+    border-radius: 999px;
+    padding: 13px 26px;
+    cursor: pointer;
   }
   button.rec-btn.recording { background: var(--bad); }
   button.rec-btn:disabled { background: #9CA79E; cursor: not-allowed; }
 
-  .timer { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; min-width: 54px; }
+  .timer { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 600; min-width: 54px; color: var(--ink); }
+  .timer.warn { color: var(--warn); }
   .timer.hidden { visibility: hidden; }
 
-  .status-line { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; min-height: 18px; }
+  .status-line { font-size: 13.5px; color: var(--ink-soft); margin-top: 10px; min-height: 18px; }
   .status-line.error { color: var(--bad); font-weight: 600; }
 
   .link-btn {
@@ -303,24 +361,33 @@
       </button>
     </div>
 
-    <div id="recorderArea" class="card hidden">
-      <p class="section-label" id="recorderLabel">Record your message</p>
-
-      <div class="facing-toggle hidden" id="facingToggle">
-        <button type="button" class="facing-btn active" id="facingFrontBtn">Front camera</button>
-        <button type="button" class="facing-btn" id="facingBackBtn">Back camera</button>
+    <!-- ===== Voice recorder — independent instance, own elements ===== -->
+    <div id="voiceRecorderArea" class="card hidden">
+      <p class="section-label">Record your voice message</p>
+      <div class="record-row">
+        <button type="button" class="rec-btn" id="voiceRecBtn">Start recording</button>
+        <span class="timer hidden" id="voiceTimer">0:00</span>
       </div>
+      <p class="status-line" id="voiceStatus"></p>
+      <button type="button" class="link-btn" id="voiceChangeModeBtn">Choose a different way to record</button>
+    </div>
 
+    <!-- ===== Video recorder — independent instance, own elements ===== -->
+    <div id="videoRecorderArea" class="card hidden">
+      <p class="section-label">Record your video message</p>
+      <div class="facing-toggle" id="videoFacingToggle">
+        <button type="button" class="facing-btn active" id="videoFacingFrontBtn">Front camera</button>
+        <button type="button" class="facing-btn" id="videoFacingBackBtn">Back camera</button>
+      </div>
       <div class="video-stage" id="videoStage">
-        <video id="livePreview" class="live-preview" autoplay muted playsinline></video>
+        <video id="videoLivePreview" class="live-preview" autoplay muted playsinline></video>
         <div class="stage-controls">
-          <button type="button" class="rec-btn" id="recBtn">Start recording</button>
-          <span class="timer hidden" id="recTimer">0:00</span>
+          <button type="button" class="rec-btn" id="videoRecBtn">Start recording</button>
+          <span class="timer hidden" id="videoTimer">0:00</span>
         </div>
       </div>
-
-      <p class="status-line" id="recStatus"></p>
-      <button type="button" class="link-btn" id="changeModeBtn">Choose a different way to record</button>
+      <p class="status-line" id="videoStatus"></p>
+      <button type="button" class="link-btn" id="videoChangeModeBtn">Choose a different way to record</button>
     </div>
 
     <div id="reviewArea" class="card hidden">
@@ -373,15 +440,15 @@
 (function () {
   "use strict";
 
-  // ---------- element refs ----------
+  // ---------- element refs (states, form, mode picker, review/upload/success —
+  // the recorder instances below look up their OWN elements directly, matching
+  // mediarecorder-test.html's setupRecorder(), not this shared map) ----------
   var el = {};
   ['loadingState','errorState','errorTitle','errorBody','mainState','coupleName',
    'nameInput','nameError','emailInput','unsupportedNotice','modePicker',
-   'chooseVoiceBtn','chooseVideoBtn','recorderArea','recorderLabel',
-   'facingToggle','facingFrontBtn','facingBackBtn','videoStage','livePreview',
-   'recBtn','recTimer','recStatus','changeModeBtn','reviewArea','reviewAudio',
-   'reviewVideo','recordAgainBtn','submitBtn','uploadArea','progressFill',
-   'uploadStatus','submitError','successState','successSub'
+   'chooseVoiceBtn','chooseVideoBtn','voiceRecorderArea','videoRecorderArea',
+   'reviewArea','reviewAudio','reviewVideo','recordAgainBtn','submitBtn',
+   'uploadArea','progressFill','uploadStatus','submitError','successState','successSub'
   ].forEach(function (id) { el[id] = document.getElementById(id); });
 
   function show(node) { node.classList.remove('hidden'); }
@@ -407,6 +474,15 @@
     var s = Math.floor(totalSeconds % 60);
     return m + ':' + (s < 10 ? '0' : '') + s;
   }
+  function friendlyGetUserMediaError(err, isVideo) {
+    if (err && err.name === 'NotAllowedError') {
+      return 'We need permission to use your ' + (isVideo ? 'camera and microphone' : 'microphone') + '. Please allow access and try again.';
+    }
+    if (err && err.name === 'NotFoundError') {
+      return 'We couldn’t find a ' + (isVideo ? 'camera or microphone' : 'microphone') + ' on this device.';
+    }
+    return 'We couldn’t start recording. Please try again.';
+  }
 
   // ---------- app state ----------
   var state = {
@@ -414,18 +490,6 @@
     blob: null,
     mode: null,          // 'voice' | 'video'
     durationSeconds: 0,
-  };
-
-  var RECORDER_CONFIG = {
-    voice: {
-      constraints: { audio: true },
-      mimeCandidates: ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'],
-      capSeconds: 300, warnBeforeSeconds: 30, label: 'Record your voice message',
-    },
-    video: {
-      mimeCandidates: ['video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'],
-      capSeconds: 180, warnBeforeSeconds: 30, label: 'Record your video message',
-    },
   };
 
   // ============================================================
@@ -514,194 +578,255 @@
   el.nameInput.addEventListener('input', function () { el.nameError.textContent = ''; });
 
   // ============================================================
-  // Mode selection → recorder ready state.
+  // Mode selection → reveal the chosen recorder card.
   // ============================================================
-  var currentFacing = 'user';
-
-  function enterMode(mode) {
+  function revealRecorder(mode) {
     if (!validName()) return;
     state.mode = mode;
     hide(el.modePicker);
-    show(el.recorderArea);
-    el.recorderLabel.textContent = RECORDER_CONFIG[mode].label;
-    el.recStatus.textContent = '';
-    el.recStatus.classList.remove('error');
-
-    if (mode === 'video') {
-      show(el.facingToggle);
-      el.videoStage.classList.add('video-mode');
-      el.videoStage.classList.remove('voice-mode');
-    } else {
-      hide(el.facingToggle);
-      el.videoStage.classList.add('voice-mode');
-      el.videoStage.classList.remove('video-mode');
-    }
-    resetRecBtn();
+    show(mode === 'video' ? el.videoRecorderArea : el.voiceRecorderArea);
   }
 
-  el.chooseVoiceBtn.addEventListener('click', function () { enterMode('voice'); });
-  el.chooseVideoBtn.addEventListener('click', function () { enterMode('video'); });
-
-  el.facingFrontBtn.addEventListener('click', function () {
-    if (isRecording) return;
-    currentFacing = 'user';
-    el.facingFrontBtn.classList.add('active'); el.facingBackBtn.classList.remove('active');
-  });
-  el.facingBackBtn.addEventListener('click', function () {
-    if (isRecording) return;
-    currentFacing = 'environment';
-    el.facingBackBtn.classList.add('active'); el.facingFrontBtn.classList.remove('active');
-  });
-
-  el.changeModeBtn.addEventListener('click', function () {
-    if (isRecording) stopRecording(null);
-    hide(el.recorderArea);
-    show(el.modePicker);
-  });
+  el.chooseVoiceBtn.addEventListener('click', function () { revealRecorder('voice'); });
+  el.chooseVideoBtn.addEventListener('click', function () { revealRecorder('video'); });
 
   // ============================================================
-  // Recorder — ported from mediarecorder-test.html's setupRecorder().
-  // Only one recorder is ever active at a time on this page, driven
-  // by state.mode, so this is a single shared instance rather than
-  // per-mode setup like the prototype.
+  // Recorder factory — ported DIRECTLY from mediarecorder-test.html's
+  // setupRecorder(). Adapted only in two ways: (1) finishRecording() hands
+  // the blob off to this page's review/submit flow via config.onFinish
+  // instead of a local <audio>/<video> playback element (the prototype was
+  // a side-by-side diagnostic with no submission step); (2) an optional
+  // "choose a different way to record" back-link (config.changeModeBtnId/
+  // areaId) — a REAL-PAGE-ONLY addition, not in the prototype, needed
+  // because this page must commit to ONE mode to submit, unlike the
+  // prototype which just showed both permanently. Everything else —
+  // element lookups, the facing-toggle wiring, the start/stop/tick timer
+  // logic, the mimeType fallback chain, the visibilitychange/pagehide
+  // cleanup — matches the prototype line-for-line. Each call below is a
+  // fully independent instance: its own stream/recorder/chunks/
+  // isRecording/chosenMimeType, own DOM elements, nothing shared with the
+  // other instance. Returns { resetUI } so recordAgainBtn (shared, since
+  // it lives in the one review card both modes flow through) can restore
+  // whichever instance's button/timer to a ready state.
   // ============================================================
-  var stream = null, recorder = null, chunks = [], startedAt = 0;
-  var intervalId = null, isRecording = false, chosenMimeType = '', currentObjectUrl = null;
+  function setupRecorder(config) {
+    var btn = document.getElementById(config.btnId);
+    var timerEl = document.getElementById(config.timerId);
+    var statusEl = document.getElementById(config.statusId);
+    var livePreviewEl = config.livePreviewId ? document.getElementById(config.livePreviewId) : null;
+    var stageEl = config.stageId ? document.getElementById(config.stageId) : null;
+    var facingFrontBtn = config.facingFrontId ? document.getElementById(config.facingFrontId) : null;
+    var facingBackBtn = config.facingBackId ? document.getElementById(config.facingBackId) : null;
+    var currentFacing = 'user';
 
-  function resetRecBtn() {
-    el.recBtn.textContent = 'Start recording';
-    el.recBtn.classList.remove('recording');
-    el.recBtn.disabled = false;
-    el.recTimer.classList.add('hidden');
-    el.recTimer.textContent = '0:00';
-  }
-
-  function friendlyGetUserMediaError(err) {
-    if (err && err.name === 'NotAllowedError') {
-      return 'We need permission to use your ' + (state.mode === 'video' ? 'camera and microphone' : 'microphone') + '. Please allow access and try again.';
-    }
-    if (err && err.name === 'NotFoundError') {
-      return 'We couldn’t find a ' + (state.mode === 'video' ? 'camera or microphone' : 'microphone') + ' on this device.';
-    }
-    return 'We couldn’t start recording. Please try again.';
-  }
-
-  function tick() {
-    var cfg = RECORDER_CONFIG[state.mode];
-    var elapsed = (Date.now() - startedAt) / 1000;
-    el.recTimer.textContent = fmtTime(elapsed);
-    var remaining = cfg.capSeconds - elapsed;
-    el.recTimer.classList.toggle('warn', remaining <= cfg.warnBeforeSeconds && remaining > 0);
-    if (elapsed >= cfg.capSeconds) stopRecording('Reached the ' + fmtTime(cfg.capSeconds) + ' limit.');
-  }
-
-  function startRecording() {
-    var cfg = RECORDER_CONFIG[state.mode];
-    chunks = [];
-    el.recStatus.textContent = 'Requesting permission…';
-    el.recStatus.classList.remove('error');
-
-    var constraints = state.mode === 'video'
-      ? { video: { facingMode: currentFacing }, audio: true }
-      : cfg.constraints;
-
-    navigator.mediaDevices.getUserMedia(constraints).then(function (s) {
-      stream = s;
-      if (state.mode === 'video') {
-        el.livePreview.srcObject = stream;
-        el.videoStage.classList.add('recording');
-      }
-      chosenMimeType = pickMimeType(cfg.mimeCandidates);
-      var options = chosenMimeType ? { mimeType: chosenMimeType } : {};
-
-      try {
-        recorder = new MediaRecorder(stream, options);
-      } catch (e) {
-        el.recStatus.textContent = 'Recording isn’t supported on this device.';
-        el.recStatus.classList.add('error');
-        stream.getTracks().forEach(function (t) { t.stop(); });
-        el.videoStage.classList.remove('recording');
-        return;
-      }
-
-      recorder.addEventListener('dataavailable', function (e) {
-        if (e.data && e.data.size > 0) chunks.push(e.data);
+    if (facingFrontBtn && facingBackBtn) {
+      facingFrontBtn.addEventListener('click', function () {
+        if (isRecording) return;
+        currentFacing = 'user';
+        facingFrontBtn.classList.add('active');
+        facingBackBtn.classList.remove('active');
       });
-      recorder.addEventListener('stop', finishRecording);
-      recorder.addEventListener('error', function (e) {
-        el.recStatus.textContent = 'Recording error: ' + (e.error ? e.error.message : 'unknown');
-        el.recStatus.classList.add('error');
+      facingBackBtn.addEventListener('click', function () {
+        if (isRecording) return;
+        currentFacing = 'environment';
+        facingBackBtn.classList.add('active');
+        facingFrontBtn.classList.remove('active');
       });
+    }
 
-      recorder.start();
-      isRecording = true;
-      startedAt = Date.now();
-      el.recBtn.textContent = 'Stop recording';
-      el.recBtn.classList.add('recording');
-      el.facingFrontBtn.disabled = true;
-      el.facingBackBtn.disabled = true;
-      el.recTimer.classList.remove('hidden');
-      el.recTimer.textContent = '0:00';
-      el.recStatus.textContent = 'Recording…';
-      intervalId = setInterval(tick, 250);
-    }).catch(function (err) {
-      el.recStatus.textContent = friendlyGetUserMediaError(err);
-      el.recStatus.classList.add('error');
+    var stream = null;
+    var recorder = null;
+    var chunks = [];
+    var startedAt = 0;
+    var intervalId = null;
+    var isRecording = false;
+    var chosenMimeType = '';
+    var currentObjectUrl = null;
+
+    if (!canRecord) {
+      btn.disabled = true;
+      statusEl.textContent = 'Recording isn’t supported in this browser.';
+      statusEl.classList.add('error');
+    }
+
+    function setStatus(text, isError) {
+      statusEl.textContent = text || '';
+      statusEl.classList.toggle('error', !!isError);
+    }
+
+    function tick() {
+      var elapsed = (Date.now() - startedAt) / 1000;
+      timerEl.textContent = fmtTime(elapsed);
+      var remaining = config.capSeconds - elapsed;
+      timerEl.classList.toggle('warn', remaining <= config.warnBeforeSeconds && remaining > 0);
+      if (elapsed >= config.capSeconds) {
+        stopRecording('Reached the ' + fmtTime(config.capSeconds) + ' limit.');
+      }
+    }
+
+    function startRecording() {
+      chunks = [];
+      setStatus('Requesting permission…');
+
+      var activeConstraints = config.constraints;
+      if (facingFrontBtn && facingBackBtn) {
+        activeConstraints = { video: { facingMode: currentFacing }, audio: true };
+      }
+
+      navigator.mediaDevices.getUserMedia(activeConstraints).then(function (s) {
+        stream = s;
+        if (livePreviewEl) livePreviewEl.srcObject = stream;
+        if (stageEl) stageEl.classList.add('recording');
+        chosenMimeType = pickMimeType(config.mimeCandidates);
+
+        var options = chosenMimeType ? { mimeType: chosenMimeType } : {};
+        try {
+          recorder = new MediaRecorder(stream, options);
+        } catch (e) {
+          setStatus('Recording isn’t supported on this device.', true);
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          if (livePreviewEl) livePreviewEl.srcObject = null;
+          if (stageEl) stageEl.classList.remove('recording');
+          return;
+        }
+
+        recorder.addEventListener('dataavailable', function (e) {
+          if (e.data && e.data.size > 0) chunks.push(e.data);
+        });
+
+        recorder.addEventListener('stop', function () {
+          finishRecording();
+        });
+
+        recorder.addEventListener('error', function (e) {
+          setStatus('Recording error: ' + (e.error ? e.error.message : 'unknown'), true);
+        });
+
+        recorder.start();
+        isRecording = true;
+        startedAt = Date.now();
+        btn.textContent = 'Stop recording';
+        btn.classList.add('recording');
+        if (facingFrontBtn) facingFrontBtn.disabled = true;
+        if (facingBackBtn) facingBackBtn.disabled = true;
+        timerEl.classList.remove('hidden');
+        timerEl.textContent = '0:00';
+        setStatus('Recording…');
+        intervalId = setInterval(tick, 250);
+      }).catch(function (err) {
+        setStatus(friendlyGetUserMediaError(err, !!config.livePreviewId), true);
+      });
+    }
+
+    function stopRecording(reason) {
+      if (!isRecording || !recorder) return;
+      isRecording = false;
+      clearInterval(intervalId);
+      intervalId = null;
+      btn.textContent = 'Start recording';
+      btn.classList.remove('recording');
+      timerEl.classList.add('hidden');
+      if (reason) setStatus(reason);
+      if (recorder.state !== 'inactive') recorder.stop();
+      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+      if (livePreviewEl) livePreviewEl.srcObject = null;
+      if (stageEl) stageEl.classList.remove('recording');
+      if (facingFrontBtn) facingFrontBtn.disabled = false;
+      if (facingBackBtn) facingBackBtn.disabled = false;
+    }
+
+    function finishRecording() {
+      if (!chunks.length) return; // cancelled before any data arrived
+      var blob = new Blob(chunks, chosenMimeType ? { type: chosenMimeType } : undefined);
+      var actualType = blob.type || (recorder && recorder.mimeType) || '';
+      var measuredSeconds = (Date.now() - startedAt) / 1000;
+
+      if (currentObjectUrl) { URL.revokeObjectURL(currentObjectUrl); }
+      currentObjectUrl = URL.createObjectURL(blob);
+
+      config.onFinish(blob, actualType, measuredSeconds, currentObjectUrl);
+    }
+
+    btn.addEventListener('click', function () {
+      if (isRecording) {
+        stopRecording('Stopped.');
+      } else {
+        startRecording();
+      }
     });
+
+    if (config.changeModeBtnId && config.areaId) {
+      document.getElementById(config.changeModeBtnId).addEventListener('click', function () {
+        if (isRecording) stopRecording(null);
+        hide(document.getElementById(config.areaId));
+        show(el.modePicker);
+      });
+    }
+
+    // Release the camera/mic if the tab is backgrounded or left mid-recording.
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && isRecording) {
+        stopRecording('Stopped — the page was backgrounded.');
+      }
+    });
+    window.addEventListener('pagehide', function () {
+      if (isRecording) stopRecording(null);
+    });
+
+    return {
+      resetUI: function () {
+        btn.textContent = 'Start recording';
+        btn.classList.remove('recording');
+        timerEl.classList.add('hidden');
+        timerEl.textContent = '0:00';
+        setStatus('');
+      },
+    };
   }
 
-  function stopRecording(reason) {
-    if (!isRecording || !recorder) return;
-    isRecording = false;
-    clearInterval(intervalId); intervalId = null;
-    el.recBtn.textContent = 'Start recording';
-    el.recBtn.classList.remove('recording');
-    el.recTimer.classList.add('hidden');
-    if (reason) { el.recStatus.textContent = reason; }
-    if (recorder.state !== 'inactive') recorder.stop();
-    if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
-    el.livePreview.srcObject = null;
-    el.videoStage.classList.remove('recording');
-    el.facingFrontBtn.disabled = false;
-    el.facingBackBtn.disabled = false;
-  }
-
-  function finishRecording() {
-    if (!chunks.length) return; // cancelled before any data arrived
-    var blob = new Blob(chunks, chosenMimeType ? { type: chosenMimeType } : undefined);
-    var actualType = blob.type || (recorder && recorder.mimeType) || '';
-    var measuredSeconds = (Date.now() - startedAt) / 1000;
-
-    if (currentObjectUrl) URL.revokeObjectURL(currentObjectUrl);
-    currentObjectUrl = URL.createObjectURL(blob);
-
-    state.blob = blob;
-    state.durationSeconds = measuredSeconds;
-
-    showReview(actualType, currentObjectUrl);
-  }
-
-  el.recBtn.addEventListener('click', function () {
-    if (isRecording) stopRecording('Stopped.');
-    else startRecording();
+  var voiceRecorder = setupRecorder({
+    btnId: 'voiceRecBtn',
+    timerId: 'voiceTimer',
+    statusId: 'voiceStatus',
+    changeModeBtnId: 'voiceChangeModeBtn',
+    areaId: 'voiceRecorderArea',
+    constraints: { audio: true },
+    mimeCandidates: ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac'],
+    capSeconds: 300,
+    warnBeforeSeconds: 30,
+    onFinish: function (blob, mimeType, measuredSeconds, objectUrl) {
+      state.blob = blob;
+      state.durationSeconds = measuredSeconds;
+      showReview(objectUrl);
+    },
   });
 
-  // Release the camera/mic if the tab is backgrounded or left mid-recording.
-  document.addEventListener('visibilitychange', function () {
-    if (document.hidden && isRecording) stopRecording('Stopped — the page was backgrounded.');
-  });
-  window.addEventListener('pagehide', function () {
-    if (isRecording) stopRecording(null);
-  });
-  window.addEventListener('beforeunload', function (e) {
-    if (uploading) { e.preventDefault(); e.returnValue = ''; }
+  var videoRecorder = setupRecorder({
+    btnId: 'videoRecBtn',
+    timerId: 'videoTimer',
+    statusId: 'videoStatus',
+    livePreviewId: 'videoLivePreview',
+    stageId: 'videoStage',
+    facingFrontId: 'videoFacingFrontBtn',
+    facingBackId: 'videoFacingBackBtn',
+    changeModeBtnId: 'videoChangeModeBtn',
+    areaId: 'videoRecorderArea',
+    mimeCandidates: ['video/webm;codecs=vp9,opus', 'video/webm', 'video/mp4'],
+    capSeconds: 180,
+    warnBeforeSeconds: 30,
+    onFinish: function (blob, mimeType, measuredSeconds, objectUrl) {
+      state.blob = blob;
+      state.durationSeconds = measuredSeconds;
+      showReview(objectUrl);
+    },
   });
 
   // ============================================================
   // Review → Record again / Submit.
   // ============================================================
-  function showReview(mimeType, objectUrl) {
-    hide(el.recorderArea);
+  function showReview(objectUrl) {
+    hide(el.voiceRecorderArea);
+    hide(el.videoRecorderArea);
     show(el.reviewArea);
     hide(el.reviewAudio); hide(el.reviewVideo);
 
@@ -713,10 +838,9 @@
 
   el.recordAgainBtn.addEventListener('click', function () {
     hide(el.reviewArea);
-    show(el.recorderArea);
-    resetRecBtn();
-    el.recStatus.textContent = '';
-    el.recStatus.classList.remove('error');
+    var isVideo = state.mode === 'video';
+    show(isVideo ? el.videoRecorderArea : el.voiceRecorderArea);
+    (isVideo ? videoRecorder : voiceRecorder).resetUI();
     state.blob = null;
   });
 
@@ -724,6 +848,10 @@
   // Submit — init (signed upload URL) → PUT the blob → finalize.
   // ============================================================
   var uploading = false;
+
+  window.addEventListener('beforeunload', function (e) {
+    if (uploading) { e.preventDefault(); e.returnValue = ''; }
+  });
 
   function postJSON(url, body) {
     return fetch(url, {
