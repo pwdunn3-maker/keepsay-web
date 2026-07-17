@@ -1,21 +1,27 @@
 // api/submit-vault-contribution.js — keepsay-web
-// Service-role write path for the Wedding Vault contributor page
+// Service-role write path for the Occasion Vault contributor page
 // (vault/[token].html). Contributors never get a Supabase key — this
-// endpoint validates token/window/storage and is the ONLY place a
-// `vault_contributions` row can be written.
+// endpoint validates token/window/storage and is the ONLY place an
+// `event_contributions` row can be written.
 //
-// Depends on `wedding_vaults` + `vault_contributions`
-// (docs/wedding-vault-build-plan.md §3). Neither table is deployed yet —
-// this endpoint is correct against the documented schema but will error
-// until the migration runs.
+// Depends on `event_vaults` + `event_contributions` (renamed from
+// `wedding_vaults`/`vault_contributions` 2026-07-17 when the vault went
+// occasion-generic; `honoree_name` replaced `couple_name`). DEPLOYED and
+// live. Authoritative schema record: docs/sql/event_vault_schema.md in
+// luminary-legacy (columns, FKs, indexes, RLS, and the
+// increment_vault_storage function definition — that function was re-created
+// at the rename, since a LANGUAGE sql text body does NOT follow a table
+// rename). docs/wedding-vault-build-plan.md §3's SQL block is the
+// pre-correction original draft — kept there for historical context only.
 //
-// ⚠️ SCHEMA ADDITIONS beyond docs/wedding-vault-build-plan.md §3:
-//   • `vault_contributions.status text NOT NULL DEFAULT 'pending'`
-//     (values: 'pending' | 'complete') — NOT in the doc's original
-//     CREATE TABLE. It's what makes the init/finalize reconciliation below
-//     possible — see api/cleanup-vault-uploads.js.
-//   • A composite index: `CREATE INDEX ON vault_contributions (status, submitted_at);`
-//     — matches api/cleanup-vault-uploads.js's actual sweep query
+// ⚠️ SCHEMA ADDITIONS beyond the build-plan doc's original draft (confirmed
+// live 2026-07-17, see docs/sql/wedding_vault_schema.md for the exact deployed
+// definitions):
+//   • `event_contributions.status text NOT NULL DEFAULT 'pending'`
+//     (values: 'pending' | 'complete') — makes the init/finalize
+//     reconciliation below possible — see api/cleanup-vault-uploads.js.
+//   • A composite index on `event_contributions (status, submitted_at)` —
+//     matches api/cleanup-vault-uploads.js's actual sweep query
 //     (`.eq('status','pending').lt('submitted_at', cutoff)`) so that sweep
 //     stays a fast indexed lookup instead of a growing table scan as
 //     contributions accumulate. `submitted_at` is set EXPLICITLY by
@@ -23,33 +29,19 @@
 //     column's own `DEFAULT now()` — index the column the code actually
 //     writes and the sweep actually filters on, not a column the schema
 //     merely defaults.
-//   • A Postgres RPC function for the storage_used_mb increment in
-//     handleFinalize (see incrementStorageUsed below), so it's a single
-//     atomic UPDATE instead of a JS read-then-write:
-//
-//       CREATE OR REPLACE FUNCTION increment_vault_storage(p_vault_id uuid, p_amount numeric)
-//       RETURNS TABLE(storage_used_mb numeric)
-//       LANGUAGE sql
-//       AS $$
-//         UPDATE wedding_vaults
-//         SET storage_used_mb = storage_used_mb + p_amount
-//         WHERE id = p_vault_id
-//           AND storage_used_mb + p_amount <= storage_limit_mb
-//         RETURNING storage_used_mb;
-//       $$;
-//
-//     `p_vault_id uuid` assumes `wedding_vaults.id` is still `uuid` per the
-//     original doc — wedding_vaults.id is NOT a user-reference column (it's
-//     this table's own PK, never an FK to profiles.id), so it should be
-//     unaffected by the text-vs-uuid schema correction that applies to
-//     user-reference columns — but verify against the live schema before
-//     running this, same as everything else here. The WHERE clause folds
-//     the "would this exceed the limit" check INTO the atomic update (0
-//     rows affected = either the vault doesn't exist or the increment
-//     would have exceeded storage_limit_mb) — no separate read step, no
-//     retry loop, no window for a concurrent writer to clobber another's
-//     increment.
-// Add all three to the migration before deploying either endpoint.
+//   • The `increment_vault_storage` Postgres RPC function used by
+//     incrementStorageUsed below, confirmed live as SECURITY DEFINER with
+//     SET search_path TO 'public' (properly hardened against the classic
+//     mutable-search_path hijack risk — verify this stays true if the
+//     function is ever recreated). `p_vault_id uuid` is correct:
+//     event_vaults.id is NOT a user-reference column (it's this table's
+//     own PK, never an FK to profiles.id), so it was unaffected by the
+//     text-vs-uuid correction that applies to user-reference columns like
+//     event_vaults.creator_user_id. The WHERE clause folds the "would this
+//     exceed the limit" check INTO the atomic update (0 rows affected =
+//     either the vault doesn't exist or the increment would have exceeded
+//     storage_limit_mb) — no separate read step, no retry loop, no window
+//     for a concurrent writer to clobber another's increment.
 //
 // ── Why this is a TWO-PHASE endpoint (init / finalize), not one POST
 // carrying the recording bytes ─────────────────────────────────────────
@@ -63,7 +55,7 @@
 //
 // So the flow is:
 //   1. POST {action:'init', ...}     → validates token/window/storage,
-//      writes a `status:'pending'` vault_contributions row (see the
+//      writes a `status:'pending'` event_contributions row (see the
 //      schema note above), and returns a short-lived, single-path
 //      Supabase Storage signed UPLOAD URL. The contributor's browser
 //      PUTs the recording BYTES directly to that URL (Supabase Storage),
@@ -125,7 +117,7 @@ function setCors(res) {
 
 // iOS Safari records video/mp4; Android Chrome records video/webm (voice is
 // audio/webm;codecs=opus almost everywhere — see mediarecorder-test.html's
-// device matrix). So `vault_contributions.recording_url`/`recording_type`
+// device matrix). So `event_contributions.recording_url`/`recording_type`
 // stores a MIX of containers from day one, by design — never assume every
 // row shares one container/extension. Anything reading these rows for
 // playback or a future format migration must branch on the actual stored
@@ -166,8 +158,8 @@ function validateContributor(contributorName, contributorEmail) {
 
 async function loadVault(token) {
   const { data: vault, error } = await admin
-    .from('wedding_vaults')
-    .select('id, vault_token, couple_name, contribution_closes_at, unlocks_at, is_unlocked, storage_used_mb, storage_limit_mb')
+    .from('event_vaults')
+    .select('id, vault_token, honoree_name, contribution_closes_at, unlocks_at, is_unlocked, storage_used_mb, storage_limit_mb')
     .eq('vault_token', token)
     .maybeSingle();
   if (error) throw error;
@@ -246,7 +238,7 @@ async function handleInit(req, res) {
   // trusting an implicit DB default that isn't even deployed yet — removes
   // any risk of a future schema/migration author reasonably (but wrongly,
   // for this table) wiring it to be set only at finalize.
-  const { error: pendingErr } = await admin.from('vault_contributions').insert({
+  const { error: pendingErr } = await admin.from('event_contributions').insert({
     id: contributionId,
     vault_id: vault.id,
     contributor_name: name,
@@ -272,7 +264,7 @@ async function handleInit(req, res) {
     console.error('submit-vault-contribution: createSignedUploadUrl failed', signErr && signErr.message);
     // Best-effort immediate cleanup rather than waiting for the sweep —
     // this contribution never got a usable URL, so it can never complete.
-    await admin.from('vault_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
+    await admin.from('event_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
     return res.status(500).json({ error: 'Could not prepare upload' });
   }
 
@@ -350,7 +342,7 @@ async function handleFinalize(req, res) {
     // client's claimed size passed the earlier pre-filter — clean it up
     // and reject, same as any other rejected finalize.
     await admin.storage.from(BUCKET).remove([path]).catch(() => {});
-    await admin.from('vault_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
+    await admin.from('event_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
     return res.status(400).json({ error: 'That recording is larger than allowed' });
   }
 
@@ -366,7 +358,7 @@ async function handleFinalize(req, res) {
     // the remaining space). Clean up the orphaned upload + its pending row
     // now rather than waiting for the sweep.
     await admin.storage.from(BUCKET).remove([path]).catch(() => {});
-    await admin.from('vault_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
+    await admin.from('event_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
     return res.status(413).json({ error: 'This vault is full', reason: 'storage_full' });
   }
 
@@ -375,7 +367,7 @@ async function handleFinalize(req, res) {
   // file_size_mb here is the REAL, storage-measured actualSizeMb — this
   // overwrites init's client-supplied estimate with the authoritative value.
   const { data: updated, error: updErr } = await admin
-    .from('vault_contributions')
+    .from('event_contributions')
     .update({
       status: 'complete',
       contributor_name: name,
@@ -400,7 +392,7 @@ async function handleFinalize(req, res) {
     // swept by cleanup-vault-uploads.js before this call landed (a very
     // slow upload, past the sweep window). Distinguish rather than guess.
     const { data: existing } = await admin
-      .from('vault_contributions')
+      .from('event_contributions')
       .select('id, status')
       .eq('id', contributionId)
       .maybeSingle();
@@ -413,7 +405,7 @@ async function handleFinalize(req, res) {
     // else: already complete — fall through to the success response.
   }
 
-  return res.status(200).json({ success: true, coupleName: vault.couple_name, unlockDate: vault.unlocks_at });
+  return res.status(200).json({ success: true, honoreeName: vault.honoree_name, unlockDate: vault.unlocks_at });
 }
 
 module.exports = async function handler(req, res) {

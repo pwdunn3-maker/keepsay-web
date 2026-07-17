@@ -1,9 +1,9 @@
 // api/cleanup-vault-uploads.js — keepsay-web
-// Scheduled reconciliation for the Wedding Vault contributor upload flow
+// Scheduled reconciliation for the Occasion Vault contributor upload flow
 // (vault/[token].html + api/submit-vault-contribution.js).
 //
-// api/submit-vault-contribution.js's `init` action writes a
-// `vault_contributions` row with status='pending' AND mints a Supabase
+// api/submit-vault-contribution.js's `init` action writes an
+// `event_contributions` row with status='pending' AND mints a Supabase
 // Storage path BEFORE the browser's PUT/`finalize` call ever completes. If
 // the guest closes the tab mid-upload (or `finalize` never runs for any
 // other reason), that row + any bytes that made it to storage are orphaned
@@ -12,18 +12,18 @@
 //
 // Runs on the SAME cron mechanism this repo already uses for r2-backup.js
 // (see the `crons` array in vercel.json) — just its own schedule/entry,
-// not a new mechanism. NOTE: unlike this file, r2-backup.js does NOT gate
-// itself with any secret/auth check today (checked — it has none), so
-// there was no existing "auth pattern" to literally match here; the
-// CRON_SECRET check below follows Vercel's own documented convention for
-// protecting scheduled functions instead. Worth revisiting whether
-// r2-backup.js should get the same gate — out of scope for this file.
+// not a new mechanism. (r2-backup.js was unauthenticated when this file
+// was first written; the same CRON_SECRET gate used below was retrofitted
+// onto it 2026-07-17, so both cron endpoints now follow Vercel's
+// documented convention for protecting scheduled functions.)
 //
-// ⚠️ Depends on `vault_contributions.status` AND an explicitly-set
+// Depends on `event_contributions.status` AND an explicitly-set
 // `submitted_at` (both written by api/submit-vault-contribution.js's
 // handleInit — see the schema-note comment block at the top of that
-// file, which also specs the `(status, submitted_at)` index this sweep
-// query wants). Not deployed yet.
+// file). DEPLOYED and live; the `(status, submitted_at)` index this sweep
+// query wants is confirmed live (docs/sql/event_vault_schema.md in
+// luminary-legacy). Tables renamed from `vault_contributions` 2026-07-17
+// (occasion-generic rename).
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -64,7 +64,7 @@ module.exports = async function handler(req, res) {
     const staleCutoff = new Date(Date.now() - STALE_AFTER_MINUTES * 60 * 1000).toISOString();
 
     const { data: stale, error: readErr } = await admin
-      .from('vault_contributions')
+      .from('event_contributions')
       .select('id, vault_id, recording_url')
       .eq('status', 'pending')
       .lt('submitted_at', staleCutoff)
@@ -87,7 +87,7 @@ module.exports = async function handler(req, res) {
         // just-finalized message's file while its DB row survived the
         // guard — a real, permanent, undetectable data-loss bug.
         const { data: deleted, error: delErr } = await admin
-          .from('vault_contributions')
+          .from('event_contributions')
           .delete()
           .eq('id', row.id)
           .eq('status', 'pending')

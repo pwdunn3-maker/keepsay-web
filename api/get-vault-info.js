@@ -1,12 +1,14 @@
 // api/get-vault-info.js — keepsay-web
-// Public, unauthenticated resolver for the Wedding Vault contributor page
+// Public, unauthenticated resolver for the Occasion Vault contributor page
 // (vault/[token].html). Mirrors the get-memory.js pattern: service-role
 // client, explicit field whitelist, NEVER returns any recording content or
 // contribution data — just enough to render the invite + gate recording.
 //
-// Depends on the `wedding_vaults` table (docs/wedding-vault-build-plan.md §3).
-// That table is NOT deployed yet — this endpoint is correct against the
-// documented schema but will 500/404 until the migration runs.
+// Depends on the `event_vaults` table (renamed from `wedding_vaults`
+// 2026-07-17 when the vault went occasion-generic — the mechanism serves any
+// occasion; `occasion_type` discriminates, `honoree_name` replaced
+// `couple_name`). DEPLOYED and live. Authoritative schema record:
+// docs/sql/event_vault_schema.md in luminary-legacy.
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -26,8 +28,8 @@ module.exports = async function handler(req, res) {
 
   try {
     const { data: vault, error } = await supabase
-      .from('wedding_vaults')
-      .select('couple_name, contribution_closes_at, unlocks_at, is_unlocked, storage_used_mb, storage_limit_mb')
+      .from('event_vaults')
+      .select('honoree_name, contribution_closes_at, unlocks_at, is_unlocked, storage_used_mb, storage_limit_mb')
       .eq('vault_token', token)
       .maybeSingle();
 
@@ -47,7 +49,7 @@ module.exports = async function handler(req, res) {
 
     const now = new Date();
     // The contribution window is open only while the closing date hasn't
-    // passed AND the couple hasn't already unlocked the vault. (Locked
+    // passed AND the owner hasn't already unlocked the vault. (Locked
     // decision: recordings stop being accepted once the seal is broken.)
     const isOpen = !vault.is_unlocked && now < new Date(vault.contribution_closes_at);
     const storageFull = Number(vault.storage_used_mb || 0) >= Number(vault.storage_limit_mb || 0);
@@ -60,7 +62,7 @@ module.exports = async function handler(req, res) {
     // never contributor data, never storage byte counts — just enough for
     // the contributor page to render its invite / error states.
     return res.status(200).json({
-      coupleName: vault.couple_name,
+      honoreeName: vault.honoree_name,
       isOpen,
       unlockDate: vault.unlocks_at,
       storageFull,

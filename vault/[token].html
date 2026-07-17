@@ -337,7 +337,7 @@
 
     <header class="invite">
       <p class="eyebrow">You&rsquo;re invited to leave a message</p>
-      <h1 id="coupleName" class="playfair"></h1>
+      <h1 id="honoreeName" class="playfair"></h1>
       <p class="invite-sub">Something for them to keep, in your own voice — a toast, a memory, a wish for what&rsquo;s ahead. It stays sealed until they choose to open it.</p>
     </header>
 
@@ -453,7 +453,7 @@
   // the recorder instances below look up their OWN elements directly, matching
   // mediarecorder-test.html's setupRecorder(), not this shared map) ----------
   var el = {};
-  ['loadingState','errorState','errorTitle','errorBody','mainState','coupleName',
+  ['loadingState','errorState','errorTitle','errorBody','mainState','honoreeName',
    'nameInput','nameError','emailInput','unsupportedNotice','modePicker',
    'chooseVoiceBtn','chooseVideoBtn','voiceRecorderArea','videoRecorderArea',
    'reviewArea','reviewAudio','reviewVideo','recordAgainBtn','submitBtn',
@@ -529,10 +529,10 @@
     },
   };
 
-  function showError(reason, coupleName) {
+  function showError(reason, honoreeName) {
     var copy = ERROR_COPY[reason] || ERROR_COPY.lookup_failed;
     el.errorTitle.textContent = copy.title;
-    el.errorBody.textContent = copy.body.replace('{name}', coupleName || 'the couple');
+    el.errorBody.textContent = copy.body.replace('{name}', honoreeName || 'the couple');
     hide(el.loadingState); hide(el.mainState); hide(el.successState);
     show(el.errorState);
   }
@@ -556,15 +556,15 @@
       })
       .then(function (result) {
         var data = result.data || {};
-        if (!result.ok) { showError(data.reason || 'lookup_failed', data.coupleName || null); return; }
-        if (data.reason) { showError(data.reason, data.coupleName || null); return; }
+        if (!result.ok) { showError(data.reason || 'lookup_failed', data.honoreeName || null); return; }
+        if (data.reason) { showError(data.reason, data.honoreeName || null); return; }
         showMain(data);
       })
       .catch(function () { showError('lookup_failed', null); });
   }
 
   function showMain(info) {
-    el.coupleName.textContent = info.coupleName || '';
+    el.honoreeName.textContent = info.honoreeName || '';
     hide(el.loadingState);
     show(el.mainState);
 
@@ -1044,7 +1044,7 @@
     var fileSizeMb = state.blob.size / (1024 * 1024);
     var uploadRef = null;
     // Read once, reused in both calls below — init now writes a real
-    // (pending) vault_contributions row up front, so it needs the same
+    // (pending) event_contributions row up front, so it needs the same
     // contributor fields finalize does.
     var contributorName = el.nameInput.value.trim();
     var contributorEmail = el.emailInput.value.trim();
@@ -1081,11 +1081,11 @@
     }).then(function (finalRes) {
       if (!finalRes.ok) throw submitErrorFromResponse(finalRes);
       uploading = false;
-      showSuccess(finalRes.data.coupleName, finalRes.data.unlockDate);
+      showSuccess(finalRes.data.honoreeName, finalRes.data.unlockDate);
     }).catch(function (err) {
       uploading = false;
       if (err.terminalReason) {
-        showError(err.terminalReason, el.coupleName.textContent);
+        showError(err.terminalReason, el.honoreeName.textContent);
         return;
       }
       hide(el.uploadArea);
@@ -1101,10 +1101,10 @@
     } catch (e) { return ''; }
   }
 
-  function showSuccess(coupleName, unlockDate) {
+  function showSuccess(honoreeName, unlockDate) {
     hide(el.mainState);
     var formatted = formatDate(unlockDate);
-    el.successSub.textContent = (coupleName || 'They') + ' will open it' + (formatted ? ' on ' + formatted + '.' : '.');
+    el.successSub.textContent = (honoreeName || 'They') + ' will open it' + (formatted ? ' on ' + formatted + '.' : '.');
     show(el.successState);
     if (window.umami) window.umami.track('vault-contribution-submitted');
   }
