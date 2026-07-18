@@ -237,6 +237,31 @@ module.exports = async function handler(req, res) {
         vault = await fulfillEventVault(paymentIntent);
       } catch (fulfillErr) {
         console.error('event_vault fulfillment failed for intent', paymentIntent.id, fulfillErr.message);
+        // Visibility monitor (concierge scale): the buyer PAID but has no vault.
+        // Alert internally so a persistently-stuck purchase can be hand-created
+        // from the Stripe payment. Best-effort — never let the alert itself throw
+        // and swallow the 500 (which is what triggers Stripe's safe retry).
+        // NOTE: fires on the FIRST failure even when a later retry self-heals, so
+        // a transient blip yields a "failed → then fine" alert. At this volume
+        // that mild over-alerting is the right trade vs. missing a stuck purchase.
+        try {
+          await sendEmail({
+            to: 'hello@stubborngood.co',
+            subject: '⚠️ Event vault fulfillment failed — may need manual creation',
+            html:
+              '<p>An event-vault purchase <strong>succeeded in Stripe</strong> but fulfillment failed. ' +
+              'The buyer has paid and has no vault yet.</p>' +
+              '<p><strong>Payment intent:</strong> ' + escapeHtml(paymentIntent.id) + '<br>' +
+              '<strong>Owner email:</strong> ' + escapeHtml(md.owner_email || '(none)') + '<br>' +
+              '<strong>Honoree:</strong> ' + escapeHtml(md.honoree_name || '(none)') + '<br>' +
+              '<strong>Tier:</strong> ' + escapeHtml(md.tier || '(none)') + '<br>' +
+              '<strong>Error:</strong> ' + escapeHtml(fulfillErr.message) + '</p>' +
+              '<p>Stripe retries automatically; if it self-heals no follow-up is sent. ' +
+              'If it persists, create the vault manually from the Stripe payment.</p>',
+          });
+        } catch (alertErr) {
+          console.error('event_vault fulfillment ALERT email also failed:', alertErr.message);
+        }
         // Return 500 so Stripe RETRIES — the idempotency gate in
         // fulfillEventVault makes the retry safe (never a second account/vault).
         return res.status(500).json({ error: 'fulfillment_failed' });
