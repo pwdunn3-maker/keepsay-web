@@ -339,6 +339,7 @@
       <p class="eyebrow">You&rsquo;re invited to leave a message</p>
       <h1 id="honoreeName" class="playfair"></h1>
       <p class="invite-sub">Something for them to keep, in your own voice — a toast, a memory, a wish for what&rsquo;s ahead. It stays sealed until they choose to open it.</p>
+      <p id="closesLine" class="invite-sub" style="margin-top:12px;font-size:13.5px;"></p>
     </header>
 
     <div class="card">
@@ -453,7 +454,7 @@
   // the recorder instances below look up their OWN elements directly, matching
   // mediarecorder-test.html's setupRecorder(), not this shared map) ----------
   var el = {};
-  ['loadingState','errorState','errorTitle','errorBody','mainState','honoreeName',
+  ['loadingState','errorState','errorTitle','errorBody','mainState','honoreeName','closesLine',
    'nameInput','nameError','emailInput','unsupportedNotice','modePicker',
    'chooseVoiceBtn','chooseVideoBtn','voiceRecorderArea','videoRecorderArea',
    'reviewArea','reviewAudio','reviewVideo','recordAgainBtn','submitBtn',
@@ -563,8 +564,20 @@
       .catch(function () { showError('lookup_failed', null); });
   }
 
+  function formatCloseDate(iso) {
+    // UTC-anchored: contribution_closes_at derives from the wedding calendar date
+    // at UTC midnight, so format in UTC to render the intended day (no off-by-one).
+    try {
+      return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    } catch (e) { return ''; }
+  }
+
   function showMain(info) {
     el.honoreeName.textContent = info.honoreeName || '';
+    if (info.contributionClosesAt) {
+      var closes = formatCloseDate(info.contributionClosesAt);
+      if (closes) el.closesLine.textContent = 'You can leave a message until ' + closes + '.';
+    }
     hide(el.loadingState);
     show(el.mainState);
 
@@ -1081,7 +1094,7 @@
     }).then(function (finalRes) {
       if (!finalRes.ok) throw submitErrorFromResponse(finalRes);
       uploading = false;
-      showSuccess(finalRes.data.honoreeName, finalRes.data.unlockDate);
+      showSuccess(finalRes.data.honoreeName);
     }).catch(function (err) {
       uploading = false;
       if (err.terminalReason) {
@@ -1095,16 +1108,9 @@
     });
   });
 
-  function formatDate(iso) {
-    try {
-      return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    } catch (e) { return ''; }
-  }
-
-  function showSuccess(honoreeName, unlockDate) {
+  function showSuccess(honoreeName) {
     hide(el.mainState);
-    var formatted = formatDate(unlockDate);
-    el.successSub.textContent = (honoreeName || 'They') + ' will open it' + (formatted ? ' on ' + formatted + '.' : '.');
+    el.successSub.textContent = 'Sealed until ' + (honoreeName || 'they') + ' are ready to open it.';
     show(el.successState);
     if (window.umami) window.umami.track('vault-contribution-submitted');
   }

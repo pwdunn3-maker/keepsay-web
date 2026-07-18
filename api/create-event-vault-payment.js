@@ -41,13 +41,26 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { tier, ownerEmail, honoreeName, occasionType } = req.body || {};
+    const { tier, ownerEmail, honoreeName, occasionType, eventDate } = req.body || {};
 
     if (!TIERS[tier]) return res.status(400).json({ error: 'Invalid tier' });
 
     const occasion = occasionType || 'wedding';
     if (!ALLOWED_OCCASIONS.includes(occasion)) {
       return res.status(400).json({ error: 'Invalid occasion' });
+    }
+
+    // Wedding date (required). Drives the contribution-close + suggested-opening
+    // dates AND the tier-grant duration at fulfillment (lib/eventVaultFulfill.js).
+    // Validate a REAL YYYY-MM-DD: regex-shape + a UTC round-trip so a rolled-over
+    // impossible date (e.g. 2026-02-30) can't slip through.
+    const weddingDate = String(eventDate || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(weddingDate)) {
+      return res.status(400).json({ error: 'A valid wedding date is required' });
+    }
+    const parsedDate = new Date(weddingDate + 'T00:00:00Z');
+    if (isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== weddingDate) {
+      return res.status(400).json({ error: 'A valid wedding date is required' });
     }
 
     // Lean checkout (locked 2026-07-17): only owner email + honoree name + tier
@@ -75,6 +88,7 @@ module.exports = async function handler(req, res) {
         occasion_type: occasion,
         owner_email: email,
         honoree_name: honoree,
+        event_date: weddingDate,
         // NOTE: no client-supplied owner uid. This endpoint is public (CORS *),
         // so the vault owner is resolved server-side FROM owner_email at
         // fulfillment (match-or-create the auth user) — never asserted by the

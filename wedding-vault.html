@@ -173,7 +173,7 @@
         <img class="seal" src="/seal1.png" alt="" aria-hidden="true">
         <p class="eyebrow">A Keepsay Wedding Vault</p>
         <h1 class="playfair">The messages they can&rsquo;t say in a speech.</h1>
-        <p class="sub">Guests leave sealed voice and video messages before the wedding. It stays sealed until the day you choose to open it &mdash; your first anniversary, or whenever feels right.</p>
+        <p class="sub">Guests leave sealed voice and video messages &mdash; before the wedding, on the big day, and for two weeks after. It stays sealed until the day you choose to open it &mdash; your first anniversary, or whenever feels right.</p>
         <div class="rule"></div>
         <svg class="scroll-cue" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
@@ -181,7 +181,7 @@
 
     <div class="how">
       <div class="step"><div class="step-n">1</div><div class="step-t">Create your vault</div><div class="step-s">One minute, one time.</div></div>
-      <div class="step"><div class="step-n">2</div><div class="step-t">Guests leave messages</div><div class="step-s">Share a link or QR &mdash; no app for them.</div></div>
+      <div class="step"><div class="step-n">2</div><div class="step-t">Guests leave messages</div><div class="step-s">Share a link or QR code &mdash; no app required.</div></div>
       <div class="step"><div class="step-n">3</div><div class="step-t">Open it together</div><div class="step-s">On your anniversary, or whenever you choose.</div></div>
     </div>
 
@@ -191,9 +191,14 @@
         <label for="honoree">The couple&rsquo;s names</label>
         <input type="text" id="honoree" maxlength="120" placeholder="e.g. Jordan &amp; Sam" autocomplete="off">
       </div>
-      <div class="field" style="margin-bottom:0">
+      <div class="field">
         <label for="ownerEmail">Your email</label>
         <input type="email" id="ownerEmail" placeholder="where we&rsquo;ll send your vault" autocomplete="email">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label for="weddingDate">Wedding date</label>
+        <input type="date" id="weddingDate" autocomplete="off">
+        <p style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.5;">Sets when guest messages close and your suggested opening date.</p>
       </div>
     </div>
 
@@ -201,11 +206,11 @@
       <p class="section-label">Choose your vault</p>
       <div class="tiers" id="tiers">
         <button type="button" class="tier" data-tier="digital">
-          <span><span class="tier-name">Digital</span><span class="tier-desc">The vault, the guest link, and 25&nbsp;GB of storage.</span></span>
+          <span><span class="tier-name">Digital</span><span class="tier-desc">The vault, the guest link, 25&nbsp;GB of storage, and a year of Keepsay Pro &mdash; through your first anniversary. Includes the free Keepsay app for your own memories.</span></span>
           <span class="tier-price">$59</span>
         </button>
         <button type="button" class="tier selected" data-tier="complete">
-          <span><span class="tier-name">Complete <span class="tier-tag">Best value</span></span><span class="tier-desc">Everything in Digital, plus a full year of Keepsay Legacy (a $79.99 value) &mdash; video, AI writing help, and your own private Vault for the memories you make together.</span></span>
+          <span><span class="tier-name">Complete <span class="tier-tag">Best value</span></span><span class="tier-desc">Everything in Digital, with your Pro year upgraded to a full year of Keepsay Legacy (a $79.99 value) &mdash; video, AI writing help, and your own private Vault. Includes the free Keepsay app for the memories you make together.</span></span>
           <span class="tier-price">$99</span>
         </button>
       </div>
@@ -271,10 +276,7 @@
     <div class="card">
       <p class="section-label">Managing your vault</p>
       <p style="font-size:14.5px;color:var(--ink-soft);line-height:1.7;">
-        Your vault lives under <strong id="kitEmail"></strong>. Sign in anytime at
-        <a href="https://www.getkeepsay.com" style="color:var(--green)">getkeepsay.com</a> with this email to set your
-        contribution and reveal dates, see how many messages have come in, and open it when you&rsquo;re ready.
-        We&rsquo;ve also emailed you this link.
+        Your vault for <strong id="kitHonoree"></strong> is created and sealed. Your vault stays sealed until you open it &mdash; no subscription is ever required to open your own vault. Managing your vault &mdash; setting your dates and opening it &mdash; is coming to the Keepsay app, and we&rsquo;ll email you the moment it&rsquo;s ready. We&rsquo;ve emailed all of this to <strong id="kitEmail"></strong> &mdash; that email is your key to everything. Questions? <a href="mailto:hello@stubborngood.co" style="color:var(--green)">hello@stubborngood.co</a>
       </p>
     </div>
   </section>
@@ -305,8 +307,8 @@
 
   var el = {};
   ['formState','processingState','preparingState','shareKitState','fallbackState',
-   'honoree','ownerEmail','tiers','payBtn','payBtnLabel','card-errors',
-   'qrTarget','downloadQrBtn','guestLink','copyLinkBtn','suggestedCopy','kitEmail'
+   'honoree','ownerEmail','weddingDate','tiers','payBtn','payBtnLabel','card-errors',
+   'qrTarget','downloadQrBtn','guestLink','copyLinkBtn','suggestedCopy','kitEmail','kitHonoree'
   ].forEach(function (id) { el[id] = document.getElementById(id); });
 
   function show(id) {
@@ -339,10 +341,12 @@
   el.payBtn.addEventListener('click', function () {
     var honoree = el.honoree.value.trim();
     var ownerEmail = el.ownerEmail.value.trim().toLowerCase();
+    var eventDate = el.weddingDate.value; // YYYY-MM-DD from <input type="date">
     el['card-errors'].textContent = '';
 
     if (!honoree) { el['card-errors'].textContent = 'Please enter the couple’s names.'; return; }
     if (!validEmail(ownerEmail)) { el['card-errors'].textContent = 'Please enter a valid email.'; return; }
+    if (!eventDate) { el['card-errors'].textContent = 'Please enter your wedding date.'; return; }
 
     el.payBtn.disabled = true;
     el.payBtnLabel.innerHTML = '<span class="spinner"></span>';
@@ -350,7 +354,7 @@
     fetch('/api/create-event-vault-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tier: selectedTier, ownerEmail: ownerEmail, honoreeName: honoree, occasionType: 'wedding' }),
+      body: JSON.stringify({ tier: selectedTier, ownerEmail: ownerEmail, honoreeName: honoree, occasionType: 'wedding', eventDate: eventDate }),
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
@@ -396,7 +400,8 @@
 
     el.guestLink.textContent = url;
     el.kitEmail.textContent = ownerEmail;
-    el.suggestedCopy.textContent = 'Scan to leave ' + honoree + ' a message — voice or video, no app needed. We’ll open it together on our first anniversary.';
+    el.kitHonoree.textContent = honoree;
+    el.suggestedCopy.textContent = 'Scan to leave ' + honoree + ' a message — voice or video, no app needed. We’ll open every message together after our first anniversary.';
 
     // QR: high error-correction ('H') + a 4-module quiet zone, for print/scan
     // across a room. Graceful if the QR lib failed to load — link still shows.

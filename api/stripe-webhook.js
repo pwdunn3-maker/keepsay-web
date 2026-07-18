@@ -1,5 +1,6 @@
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
+const QRCode = require('qrcode');
 // Occasion Vault fulfillment (auth-user provisioning + event_vaults insert) lives
 // in a require()-able module so it can be unit-tested directly with a synthetic
 // payment intent — see lib/eventVaultFulfill.js + scripts/test-event-vault-fulfill.js.
@@ -22,19 +23,23 @@ async function getRawBody(req) {
   });
 }
 
-async function sendEmail({ to, subject, html }) {
+async function sendEmail({ to, subject, html, attachments }) {
+  const payload = {
+    personalizations: [{ to: [{ email: to }] }],
+    from: { email: 'hello@stubborngood.co', name: 'Keepsay' },
+    subject,
+    content: [{ type: 'text/html', value: html }],
+  };
+  // Optional SendGrid attachments (e.g. an inline QR referenced via cid).
+  if (attachments && attachments.length) payload.attachments = attachments;
+
   const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email: to }] }],
-      from: { email: 'hello@stubborngood.co', name: 'Keepsay' },
-      subject,
-      content: [{ type: 'text/html', value: html }],
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
@@ -159,18 +164,60 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-async function sendVaultConfirmationEmail({ ownerEmail, honoreeName, vaultToken, tier }) {
+function formatFriendlyDate(iso) {
+  // UTC-anchored: contribution_closes_at is derived from the wedding calendar
+  // date at UTC midnight, so format in UTC to render the intended calendar day
+  // (avoids the timezone off-by-one, ST58 family).
+  try {
+    return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  } catch (e) { return ''; }
+}
+
+async function sendVaultConfirmationEmail({ ownerEmail, honoreeName, vaultToken, tier, contributionClosesAt }) {
   const isComplete = tier === 'complete';
   const tierLabel = isComplete ? 'Wedding Vault — Complete' : 'Wedding Vault — Digital';
   const shareUrl = 'https://www.getkeepsay.com/vault/' + vaultToken;
   const honoree = escapeHtml(honoreeName);
-  // 'complete' buyers also got a year of Legacy — tell them, and nudge them into
-  // the app (that's the funnel: active through to the anniversary reveal).
-  const legacyBlock = isComplete ? `
+  const closesFriendly = formatFriendlyDate(contributionClosesAt);
+  const closesLine = closesFriendly
+    ? `<p style="font-size:13.5px;color:#666;margin:12px 0 0;">Guests can leave messages until ${escapeHtml(closesFriendly)}.</p>`
+    : '';
+
+  // Both tiers now carry a grant (Digital = a year of Pro, Complete = a year of
+  // Legacy). Honest-minimal note, no getkeepsay.com sign-in promise — it's used
+  // in the Keepsay app.
+  const grantBlock = isComplete ? `
       <div style="background:#f0f7f4;border-radius:8px;padding:18px 22px;margin:0 0 28px;">
         <div style="font-size:12px;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:bold;">Also included</div>
-        <p style="font-size:14.5px;color:#3a3a3a;line-height:1.6;margin:0;">A full year of <strong>Keepsay Legacy</strong> for your own memories &#8212; video, AI writing help, and your private Vault. Sign in with this email to start.</p>
-      </div>` : '';
+        <p style="font-size:14.5px;color:#3a3a3a;line-height:1.6;margin:0;">A full year of <strong>Keepsay Legacy</strong> is attached to this email &#8212; video, AI writing help, and your own private Vault, through your first anniversary. You&#39;ll use it in the Keepsay app.</p>
+      </div>` : `
+      <div style="background:#f0f7f4;border-radius:8px;padding:18px 22px;margin:0 0 28px;">
+        <div style="font-size:12px;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:bold;">Also included</div>
+        <p style="font-size:14.5px;color:#3a3a3a;line-height:1.6;margin:0;">A year of <strong>Keepsay Pro</strong> is attached to this email, through your first anniversary. You&#39;ll use it in the Keepsay app.</p>
+      </div>`;
+
+  // Printable guest-link QR as an INLINE attachment (referenced via cid).
+  // Best-effort: if generation fails, the prominent text link + button above
+  // still carry the vault — never let a QR hiccup break the confirmation email.
+  let attachments;
+  let qrBlock = '';
+  try {
+    const qrBuffer = await QRCode.toBuffer(shareUrl, { type: 'png', errorCorrectionLevel: 'H', margin: 2, width: 600 });
+    attachments = [{
+      content: qrBuffer.toString('base64'),
+      type: 'image/png',
+      filename: 'keepsay-vault-qr.png',
+      disposition: 'inline',
+      content_id: 'guestqr',
+    }];
+    qrBlock = `
+      <div style="text-align:center;margin:0 0 32px;">
+        <div style="font-size:12px;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-weight:bold;">Print this QR for your guests</div>
+        <img src="cid:guestqr" alt="Scan to leave a message" width="200" height="200" style="width:200px;height:200px;border:1px solid #eee;border-radius:8px;padding:10px;background:#ffffff;">
+      </div>`;
+  } catch (qrErr) {
+    console.error('vault confirmation QR generation failed (link still sent):', qrErr.message);
+  }
 
   const html = `
 <!DOCTYPE html>
@@ -183,25 +230,25 @@ async function sendVaultConfirmationEmail({ ownerEmail, honoreeName, vaultToken,
       <div style="color:#a8c5b5;font-size:14px;margin-top:6px;">Your Wedding Vault is ready</div>
     </div>
     <div style="padding:40px;">
-      <p style="font-size:18px;color:#2d2d2d;margin:0 0 16px;">Your vault for <strong>${honoree}</strong> is open.</p>
+      <p style="font-size:18px;color:#2d2d2d;margin:0 0 16px;">Your vault for <strong>${honoree}</strong> is sealed and ready.</p>
       <p style="font-size:16px;color:#4a4a4a;line-height:1.6;margin:0 0 24px;">
         Share the link below with your guests. They can leave a sealed voice or video message &#8212; no app, no account, nothing to download. It stays sealed until you choose to open it.
       </p>
       <div style="background:#f0f7f4;border-radius:8px;padding:20px 24px;margin:0 0 28px;text-align:center;">
         <div style="font-size:12px;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;font-weight:bold;">Your guest link</div>
         <a href="${shareUrl}" style="font-size:15px;color:#1B4332;word-break:break-all;">${shareUrl}</a>
+        ${closesLine}
       </div>
       <div style="text-align:center;margin:0 0 32px;">
         <a href="${shareUrl}" style="display:inline-block;background:#D4A843;color:#1B4332;text-decoration:none;font-weight:bold;font-size:16px;padding:16px 40px;border-radius:50px;">
           Preview the guest page &#8594;
         </a>
       </div>
-      ${legacyBlock}
+      ${qrBlock}
+      ${grantBlock}
       <div style="border-top:1px solid #eee;padding-top:24px;">
         <div style="font-size:14px;color:#4a4a4a;line-height:1.7;">
-          Your vault lives under <strong>${escapeHtml(ownerEmail)}</strong>. Sign in anytime at
-          <a href="https://www.getkeepsay.com" style="color:#1B4332;">getkeepsay.com</a> with this email to manage it &#8212;
-          set your contribution and reveal dates, see how many messages have come in, and open it when you're ready.
+          Your vault for <strong>${honoree}</strong> is created and sealed. Your vault stays sealed until you open it &#8212; no subscription is ever required to open your own vault. Managing your vault (setting your dates, opening it) is coming to the Keepsay app; we&#39;ll email you the moment it&#39;s ready. Keep this email &#8212; it&#39;s your key to everything. Questions? <a href="mailto:hello@stubborngood.co" style="color:#1B4332;">hello@stubborngood.co</a>
         </div>
       </div>
     </div>
@@ -215,7 +262,7 @@ async function sendVaultConfirmationEmail({ ownerEmail, honoreeName, vaultToken,
 </body>
 </html>`;
 
-  return sendEmail({ to: ownerEmail, subject: 'Your Keepsay Wedding Vault is ready', html });
+  return sendEmail({ to: ownerEmail, subject: 'Your Keepsay Wedding Vault is ready', html, attachments });
 }
 
 module.exports = async function handler(req, res) {
@@ -284,6 +331,7 @@ module.exports = async function handler(req, res) {
           honoreeName: md.honoree_name,
           vaultToken: vault.vault_token,
           tier: md.tier,
+          contributionClosesAt: vault.contribution_closes_at,
         });
       } catch (emailErr) {
         console.error('event_vault confirmation email failed (vault OK):', emailErr.message);

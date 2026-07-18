@@ -64,7 +64,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       honoreeName: vault.honoree_name,
       isOpen,
-      unlockDate: vault.unlocks_at,
+      contributionClosesAt: vault.contribution_closes_at,
       storageFull,
       reason, // null when the vault is open and accepting messages
     });
