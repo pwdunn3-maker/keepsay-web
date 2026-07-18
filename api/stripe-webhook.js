@@ -160,9 +160,17 @@ function escapeHtml(s) {
 }
 
 async function sendVaultConfirmationEmail({ ownerEmail, honoreeName, vaultToken, tier }) {
-  const tierLabel = tier === 'gift_set' ? 'Wedding Vault — Gift Set' : 'Wedding Vault — Digital';
+  const isComplete = tier === 'complete';
+  const tierLabel = isComplete ? 'Wedding Vault — Complete' : 'Wedding Vault — Digital';
   const shareUrl = 'https://www.getkeepsay.com/vault/' + vaultToken;
   const honoree = escapeHtml(honoreeName);
+  // 'complete' buyers also got a year of Legacy — tell them, and nudge them into
+  // the app (that's the funnel: active through to the anniversary reveal).
+  const legacyBlock = isComplete ? `
+      <div style="background:#f0f7f4;border-radius:8px;padding:18px 22px;margin:0 0 28px;">
+        <div style="font-size:12px;color:#1B4332;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:bold;">Also included</div>
+        <p style="font-size:14.5px;color:#3a3a3a;line-height:1.6;margin:0;">A full year of <strong>Keepsay Legacy</strong> for your own memories &#8212; video, AI writing help, and your private Vault. Sign in with this email to start.</p>
+      </div>` : '';
 
   const html = `
 <!DOCTYPE html>
@@ -188,6 +196,7 @@ async function sendVaultConfirmationEmail({ ownerEmail, honoreeName, vaultToken,
           Preview the guest page &#8594;
         </a>
       </div>
+      ${legacyBlock}
       <div style="border-top:1px solid #eee;padding-top:24px;">
         <div style="font-size:14px;color:#4a4a4a;line-height:1.7;">
           Your vault lives under <strong>${escapeHtml(ownerEmail)}</strong>. Sign in anytime at

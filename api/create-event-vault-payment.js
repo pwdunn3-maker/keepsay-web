@@ -21,7 +21,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const TIERS = {
   digital:  { amount: 5900, label: 'Keepsay Wedding Vault — Digital' },
-  gift_set: { amount: 9900, label: 'Keepsay Wedding Vault — Gift Set' },
+  // 'complete' ($99) = vault + a full year of Keepsay Legacy (granted at
+  // fulfillment). Renamed from 'gift_set' 2026-07-17: the printed-cards half of
+  // the original Gift Set isn't fulfillable yet (no address/production pipeline),
+  // so launch is all-digital and the name no longer implies a physical gift.
+  complete: { amount: 9900, label: 'Keepsay Wedding Vault — Complete' },
 };
 
 // The schema is occasion-generic (event_vaults.occasion_type), but only the
