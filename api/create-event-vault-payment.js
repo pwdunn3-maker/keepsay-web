@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { tier, ownerEmail, honoreeName, occasionType, ownerUserId } = req.body || {};
+    const { tier, ownerEmail, honoreeName, occasionType } = req.body || {};
 
     if (!TIERS[tier]) return res.status(400).json({ error: 'Invalid tier' });
 
@@ -71,17 +71,18 @@ module.exports = async function handler(req, res) {
         occasion_type: occasion,
         owner_email: email,
         honoree_name: honoree,
-        // If the buyer happened to be signed in on the web, the client MAY pass
-        // their profiles.id so fulfillment links to that existing account
-        // directly (the "use current uid" branch) instead of matching by email.
-        // Empty for logged-out buyers, which is the common web-purchase case.
-        owner_user_id: ownerUserId ? String(ownerUserId) : '',
+        // NOTE: no client-supplied owner uid. This endpoint is public (CORS *),
+        // so the vault owner is resolved server-side FROM owner_email at
+        // fulfillment (match-or-create the auth user) — never asserted by the
+        // client body. Trusting a raw-body uid would be the ST36/ST49
+        // trust-boundary trap. If a verified web session is added later, derive
+        // the uid from a bearer token, not the request body.
       },
     });
 
     return res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
     console.error('create-event-vault-payment error:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Could not start checkout. Please try again.' });
   }
 };
