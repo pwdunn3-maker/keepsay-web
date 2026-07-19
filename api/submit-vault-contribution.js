@@ -366,6 +366,11 @@ async function handleFinalize(req, res) {
   // being 'pending' — never a raw insert, since init already created it.
   // file_size_mb here is the REAL, storage-measured actualSizeMb — this
   // overwrites init's client-supplied estimate with the authoritative value.
+  // Transcode routing (in-house pipeline — docs/server-transcode-plan.md): a WebM
+  // upload (Android/desktop MediaRecorder) is unplayable on iOS → needs transcode;
+  // an already-mp4/m4a upload (iOS Safari) is playable now → skip. transcode-vault-media
+  // (cron) claims 'pending_transcode' rows; get-vault-media serves playback_url.
+  const needsTranscode = /\.webm$/i.test(path);
   const { data: updated, error: updErr } = await admin
     .from('event_contributions')
     .update({
@@ -374,6 +379,8 @@ async function handleFinalize(req, res) {
       contributor_email: email || null,
       duration_seconds: Math.round(duration),
       file_size_mb: actualSizeMb,
+      transcode_status: needsTranscode ? 'pending_transcode' : 'not_needed',
+      playback_url: needsTranscode ? null : path,
     })
     .eq('id', contributionId)
     .eq('vault_id', vault.id)

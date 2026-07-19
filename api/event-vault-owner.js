@@ -80,6 +80,16 @@ module.exports = async function handler(req, res) {
       if (body.contributionClosesAt !== undefined) {
         const d = new Date(body.contributionClosesAt);
         if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid contributionClosesAt' });
+        // No-past close date — endpoint-side backstop mirroring the app's DateEditModal
+        // rule, so ANY other client (web management, a durability owner view) can't set a
+        // clearly-past close date. Floor = start-of-YESTERDAY UTC: a full day of slack so
+        // no legitimate app write (which anchors the close to a UTC-midnight calendar day)
+        // is ever rejected, while obviously-past input is blocked. The app remains the
+        // precise "today or later" UX guard; this is the drift-proof backstop.
+        const floor = new Date();
+        floor.setUTCHours(0, 0, 0, 0);
+        floor.setUTCDate(floor.getUTCDate() - 1);
+        if (d < floor) return res.status(400).json({ error: 'contribution_closes_at cannot be in the past' });
         patch.contribution_closes_at = d.toISOString();
       }
       if (body.unlocksAt !== undefined) {

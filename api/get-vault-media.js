@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
   try {
     const { data: rows, error } = await admin
       .from('event_contributions')
-      .select('id, contributor_name, message, recording_url, recording_type, duration_seconds, submitted_at')
+      .select('id, contributor_name, message, recording_url, playback_url, transcode_status, recording_type, duration_seconds, submitted_at')
       .eq('vault_id', vault.id)
       .eq('status', 'complete')
       .order('submitted_at', { ascending: true });
@@ -81,35 +81,59 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, count: 0, messages: [] });
     }
 
-    // Sign ALL paths in ONE batch call — one Storage round-trip, no N-parallel-request
-    // rate-limit exposure for a 150-guest vault. recording_url is a storage PATH
-    // (vault-recordings/…) under the memories bucket.
-    const paths = rows.map((r) => r.recording_url);
-    const { data: signedArr, error: signErr } = await admin.storage
-      .from(BUCKET)
-      .createSignedUrls(paths, SIGNED_URL_EXPIRY);
-    if (signErr) throw signErr;
-    // Map path -> signedUrl (each returned entry echoes its input `path`; robust to any
-    // reordering, and skips a per-item error without failing the whole reveal).
+    // A row is PLAYABLE once transcoded, or if it never needed transcoding (an mp4
+    // upload from iOS Safari). Its playable object is playback_url, falling back to
+    // recording_url for a 'not_needed' row that stored the mp4 there. A row still
+    // pending/failed transcode is NOT playable — it must NEVER be served an
+    // undecodable WebM (that IS the iOS green-screen we're fixing); it surfaces as
+    // status:'processing' so the app shows a "still being prepared" card and Play-all
+    // skips it. (transcode_failed is treated as processing too — the couple sees
+    // "preparing" while the failure alert gets a human to intervene; see
+    // docs/server-transcode-plan.md.)
+    const playablePath = (r) => {
+      // 'transcoded' MUST have its derivative — never fall back to recording_url (the
+      // undecodable WebM master); a transcoded row with a null playback_url (a manual
+      // edit / partial write) degrades to 'processing', not a green screen.
+      if (r.transcode_status === 'transcoded') return r.playback_url || null;
+      // 'not_needed' stored the already-playable mp4/m4a in recording_url (iOS Safari).
+      if (r.transcode_status === 'not_needed') return r.playback_url || r.recording_url;
+      return null; // pending_transcode | transcoding | transcode_failed | null(legacy)
+    };
+
+    // Batch-sign only the playable paths — one Storage round-trip, no N-parallel
+    // requests for a 150-guest vault.
+    const playablePaths = rows.map(playablePath).filter(Boolean);
     const urlByPath = {};
-    (signedArr || []).forEach((s) => { if (s && s.signedUrl) urlByPath[s.path] = s.signedUrl; });
+    if (playablePaths.length) {
+      const { data: signedArr, error: signErr } = await admin.storage
+        .from(BUCKET)
+        .createSignedUrls(playablePaths, SIGNED_URL_EXPIRY);
+      if (signErr) throw signErr;
+      (signedArr || []).forEach((s) => { if (s && s.signedUrl) urlByPath[s.path] = s.signedUrl; });
+    }
 
     const messages = rows.map((r) => {
-      const url = urlByPath[r.recording_url];
-      if (!url) return null; // skip an unsignable contribution rather than fail the whole reveal
       const isVideo = String(r.recording_type || '').toLowerCase().includes('video');
-      return {
+      const base = {
         id: r.id,
         contributorName: r.contributor_name,
         message: r.message || null,
         durationSeconds: r.duration_seconds || null,
-        // KnowMe field mapping: video-type -> video_url, voice -> recording_url.
-        video_url: isVideo ? url : null,
-        recording_url: isVideo ? null : url,
+        isVideo,
       };
+      const p = playablePath(r);
+      if (!p) {
+        // Still being prepared — no media served, the app shows a "preparing" card.
+        return { ...base, status: 'processing', video_url: null, recording_url: null };
+      }
+      const url = urlByPath[p];
+      if (!url) return null; // unsignable — skip rather than fail the whole reveal
+      // KnowMe field mapping: video-type -> video_url, voice -> recording_url.
+      return { ...base, status: 'ready', video_url: isVideo ? url : null, recording_url: isVideo ? null : url };
     }).filter(Boolean);
 
-    return res.status(200).json({ ok: true, count: messages.length, messages });
+    const readyCount = messages.filter((m) => m.status === 'ready').length;
+    return res.status(200).json({ ok: true, count: messages.length, readyCount, messages });
   } catch (err) {
     console.error('get-vault-media error:', err.message);
     return res.status(500).json({ error: 'Could not load messages' });
