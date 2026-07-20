@@ -337,6 +337,41 @@ async function handleFinalize(req, res) {
     return res.status(500).json({ error: 'Could not verify the uploaded file' });
   }
   const actualSizeMb = actualBytes / (1024 * 1024);
+
+  // FLOOR guard — reject an empty / implausibly-small stored object. A 0-byte upload
+  // that returned 2xx to the client (seen live: a 3-min iOS recording that stored 0
+  // bytes) would otherwise be marked 'complete' and the guest shown "your message is
+  // safe" for a message that stored NOTHING — silent loss of a sealed memory, the
+  // worst failure class this product has. Honest failure beats silent loss.
+  // The heuristic is DELIBERATELY CONSERVATIVE — a false rejection of a REAL message
+  // is worse than what we're fixing: reject only 0 bytes (always), OR < 1 KB total,
+  // OR (VIDEO only) < ~500 bytes/sec vs the reported duration (a real 1080p clip is
+  // ~1 MB/sec, so this floor is ~2000x below reality — it cannot false-reject a real
+  // recording). Voice gets only the 0/<1KB checks (no bytes/sec floor). Logged with a
+  // distinct FLOOR-REJECT tag so a recurring pattern flags the upload-reliability fix
+  // (recorder timeslice / bucket limit / TUS — feature-backlog #15) as urgent.
+  const FLOOR_MIN_BYTES = 1024;            // 1 KB, any media type
+  const VIDEO_MIN_BYTES_PER_SEC = 500;     // video only
+  const durSec = Math.max(0, Number(duration) || 0);
+  const flooredOut =
+    actualBytes === 0 ||
+    actualBytes < FLOOR_MIN_BYTES ||
+    (recordingType === 'video' && durSec > 0 && actualBytes < durSec * VIDEO_MIN_BYTES_PER_SEC);
+  if (flooredOut) {
+    console.error(
+      `submit-vault-contribution: FLOOR-REJECT empty/implausible upload — ` +
+      `contribution=${contributionId} vault=${vaultId} type=${recordingType} ` +
+      `bytes=${actualBytes} durationSec=${durSec} path=${path}`
+    );
+    // Same cleanup as the over-MAX path: delete the object + the pending row, reject.
+    await admin.storage.from(BUCKET).remove([path]).catch(() => {});
+    await admin.from('event_contributions').delete().eq('id', contributionId).eq('status', 'pending').catch(() => {});
+    return res.status(400).json({
+      error: `We didn't receive your recording — please record and try again.`,
+      reason: 'upload_empty',
+    });
+  }
+
   if (actualSizeMb > MAX_FILE_SIZE_MB) {
     // The real, uploaded file exceeds the sanity ceiling even though the
     // client's claimed size passed the earlier pre-filter — clean it up
