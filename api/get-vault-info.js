@@ -48,10 +48,16 @@ module.exports = async function handler(req, res) {
     if (!vault) return res.status(404).json({ error: 'Vault not found', reason: 'invalid_token' });
 
     const now = new Date();
-    // The contribution window is open only while the closing date hasn't
-    // passed AND the owner hasn't already unlocked the vault. (Locked
-    // decision: recordings stop being accepted once the seal is broken.)
-    const isOpen = !vault.is_unlocked && now < new Date(vault.contribution_closes_at);
+    // The contribution window is open while the closing date hasn't passed —
+    // and ONLY that. Unlocking does NOT close the window: the locked unlock
+    // model (luminary-legacy STATE.md, 2026-07-18) is "opening is one-way,
+    // anytime, and new messages arrive unsealed — contribution_closes_at
+    // alone ends the window," and the app's unlock confirm promises the
+    // couple exactly that (EventVaultDashboardScreen.js). An earlier version
+    // gated on !is_unlocked with a comment claiming the opposite decision —
+    // that inverted the record and silently killed every guest link the
+    // moment a couple opened their vault (bug found live 2026-07-21).
+    const isOpen = now < new Date(vault.contribution_closes_at);
     const storageFull = Number(vault.storage_used_mb || 0) >= Number(vault.storage_limit_mb || 0);
 
     let reason = null;

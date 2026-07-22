@@ -167,7 +167,13 @@ async function loadVault(token) {
 }
 
 function windowOpen(vault) {
-  return !vault.is_unlocked && new Date() < new Date(vault.contribution_closes_at);
+  // Only contribution_closes_at ends the window. Unlocking does NOT — the
+  // locked unlock model (luminary-legacy STATE.md, 2026-07-18) is "new
+  // messages arrive unsealed" after the couple opens, and the app's unlock
+  // confirm promises exactly that. An earlier !vault.is_unlocked gate here
+  // (mirrored in get-vault-info.js) silently rejected every guest submission
+  // the moment a vault was opened (bug found live 2026-07-21).
+  return new Date() < new Date(vault.contribution_closes_at);
 }
 
 // Atomic, single-round-trip storage increment via the increment_vault_storage
