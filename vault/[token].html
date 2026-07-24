@@ -699,6 +699,31 @@
       statusEl.classList.toggle('error', !!isError);
     }
 
+    // Read back the ACTUAL capture the browser handed us — it is NOT guaranteed
+    // to be what we asked for (a phone may cap to a lower default, or silently
+    // ignore a constraint). We REQUEST 1080p but must CONFIRM what landed. This
+    // whole capture-resolution bug hid for hours precisely because nothing ever
+    // read the real dimensions back — the page asked for nothing and everyone
+    // assumed VGA was 1080p. Never ship a capture request without the read-back.
+    // Diagnostic only: wrapped so it can never break recording. Console always.
+    // TO VERIFY CAPTURE DIMENSIONS ON A DEVICE: append ?debug to the vault URL
+    // (…/vault/<token>?debug) → the video status line then shows the live
+    // "capture: W×H @ Nfps" during preview. Guests (no ?debug) never see it.
+    // The on-screen read-back is opt-in BY DESIGN, but its existence is the
+    // whole point (it's why the 640×480-on-a-flagship bug can't hide again) —
+    // don't remove it, and don't ship a capture-constraint change without
+    // checking it with ?debug on a real device.
+    function reportCapture(s) {
+      try {
+        var vt = (s && s.getVideoTracks) ? s.getVideoTracks()[0] : null;
+        if (!vt || !vt.getSettings) return;
+        var st = vt.getSettings();
+        var line = (st.width || '?') + '×' + (st.height || '?') + ' @ ' + (st.frameRate ? Math.round(st.frameRate) : '?') + 'fps';
+        console.log('[capture] video track settings:', line, st);
+        if (/[?&]debug\b/.test(location.search)) setStatus('capture: ' + line);
+      } catch (e) { /* diagnostic only — never throw into the record path */ }
+    }
+
     function switchFacing(newFacing, activeBtn, inactiveBtn) {
       if (phase === 'recording') return; // toggle is disabled while actively recording; guarded here too
       currentFacing = newFacing;
@@ -712,10 +737,14 @@
       if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
       if (livePreviewEl) livePreviewEl.srcObject = null;
       setStatus('Switching camera…');
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: true }).then(function (s) {
+      // 1080p/30, ideal (never exact — exact throws OverconstrainedError on a
+      // camera that can't match, dead-ending the guest's one shot). Keep in
+      // sync with startPreview()'s identical request below.
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 30 } }, audio: true }).then(function (s) {
         stream = s;
         if (livePreviewEl) livePreviewEl.srcObject = stream;
         setStatus('');
+        reportCapture(stream);
       }).catch(function (err) {
         // Re-acquire failed — don't leave a dead full-size box with no
         // stream; fall back to idle so the user can just tap again.
@@ -810,13 +839,24 @@
     // MediaRecorder yet. idle → previewing. -------------------------------
     function startPreview() {
       setStatus('Requesting permission…');
-      navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing }, audio: true }).then(function (s) {
+      // 1080p/30, ideal — never exact (exact throws OverconstrainedError on a
+      // camera that can't match, which on this page is a guest losing their one
+      // recording). Without this the browser returns its VGA default: a flagship
+      // iPhone 17 measured 640×480 here.
+      // ORIENTATION: we ask for landscape 1920×1080; a portrait-held phone may
+      // return 1080×1920 (both orientations occur in real data — 480×640 portrait
+      // and 640×480 landscape). We do NOT fight it at capture; the transcode
+      // landscape-normalizes (the common keepsake-video pattern). reportCapture()
+      // below logs what we ACTUALLY got — trust that, not this request. Keep in
+      // sync with switchFacing()'s identical request above.
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacing, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 30 } }, audio: true }).then(function (s) {
         stream = s;
         if (livePreviewEl) livePreviewEl.srcObject = stream;
         if (stageEl) stageEl.classList.add('live');
         phase = 'previewing';
         btn.textContent = 'Start Recording';
         setStatus('');
+        reportCapture(stream);
       }).catch(function (err) {
         setStatus(friendlyGetUserMediaError(err, true), true);
       });
@@ -828,12 +868,25 @@
     function beginRecording() {
       chunks = [];
       chosenMimeType = pickMimeType(config.mimeCandidates);
-      var options = chosenMimeType ? { mimeType: chosenMimeType } : {};
+      // Cap the bitrate — the browser default dumps ~9.9 Mbps into the frame (a
+      // 3-min VGA clip measured ~213 MB). 2 Mbps is ample for 1080p talking-head.
+      // videoBitsPerSecond is a HINT: a browser may ignore/clamp it and must never
+      // THROW — so if construction rejects the option we retry on default rather
+      // than dead-end the guest (the catch below).
+      var options = chosenMimeType
+        ? { mimeType: chosenMimeType, videoBitsPerSecond: 2000000 }
+        : { videoBitsPerSecond: 2000000 };
       try {
         recorder = new MediaRecorder(stream, options);
       } catch (e) {
-        setStatus('Recording isn’t supported on this device.', true);
-        return;
+        // A browser that rejects videoBitsPerSecond must still record at default,
+        // not fail — retry once without the bitrate hint (keep the mimeType).
+        try {
+          recorder = new MediaRecorder(stream, chosenMimeType ? { mimeType: chosenMimeType } : {});
+        } catch (e2) {
+          setStatus('Recording isn’t supported on this device.', true);
+          return;
+        }
       }
 
       recorder.addEventListener('dataavailable', function (e) {
